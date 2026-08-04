@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BFR Tray Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --kraft:#e8dfc8;
+    --kraft-dark:#d9cca4;
+    --ink:#232520;
+    --ink-soft:#5b5648;
+    --stamp-red:#a13d2e;
+    --stamp-green:#3f6b3d;
+    --paper:#f6f1e2;
+    --line:#c9bd97;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Courier New',ui-monospace,monospace;
+    background:var(--kraft);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 3px);
+    color:var(--ink);
+    min-height:100vh;
+    padding:24px 16px 60px;
+  }
+  .wrap{max-width:980px;margin:0 auto;}
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:3px double var(--ink);
+    padding-bottom:14px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .title-block h1{
+    font-family:'Arial Black', Arial, sans-serif;
+    font-size:clamp(22px,4vw,32px);
+    letter-spacing:1px;
+    margin:0;
+    text-transform:uppercase;
+  }
+  .title-block .sub{
+    font-size:12px;
+    color:var(--ink-soft);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-top:4px;
+  }
+  .datestamp{
+    font-size:12px;
+    text-align:right;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  .datestamp .big{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:15px;
+    color:var(--ink);
+    letter-spacing:1px;
+  }
+
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:24px;
+  }
+  .stat{
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:12px 14px;
+    text-align:center;
+  }
+  .stat .n{font-family:'Arial Black',Arial,sans-serif;font-size:26px;}
+  .stat .l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);margin-top:2px;}
+  .stat.out .n{color:var(--stamp-red);}
+  .stat.in .n{color:var(--stamp-green);}
+
+  form.addform{
+    background:var(--paper);
+    border:1px dashed var(--ink-soft);
+    padding:16px;
+    margin-bottom:28px;
+    display:grid;
+    grid-template-columns:1.2fr 1.4fr 1fr auto;
+    gap:10px;
+    align-items:end;
+  }
+  form.addform .field{display:flex;flex-direction:column;gap:4px;}
+  form.addform label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);}
+  form.addform input{
+    font-family:inherit;
+    font-size:14px;
+    padding:8px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+  }
+  form.addform input:focus{outline:2px solid var(--ink);outline-offset:1px;}
+  .btn{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:12px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:10px 16px;
+    border:2px solid var(--ink);
+    background:var(--ink);
+    color:var(--paper);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn:hover{background:var(--stamp-red);border-color:var(--stamp-red);}
+  .btn.secondary{background:transparent;color:var(--ink);}
+  .btn.secondary:hover{background:var(--ink);color:var(--paper);}
+  .btn.green:hover{background:var(--stamp-green);border-color:var(--stamp-green);}
+
+  .searchrow{margin-bottom:18px;display:flex;gap:10px;}
+  .searchrow input{
+    flex:1;
+    font-family:inherit;
+    padding:9px 12px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-size:13px;
+  }
+
+  .trays{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media(max-width:760px){.trays{grid-template-columns:1fr;} form.addform{grid-template-columns:1fr;}}
+
+  .tray h2{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:14px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--ink);
+    margin-bottom:14px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .tray.out h2{color:var(--stamp-red);border-color:var(--stamp-red);}
+  .tray.in h2{color:var(--stamp-green);border-color:var(--stamp-green);}
+
+  .ticket{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-left:6px solid var(--stamp-red);
+    padding:12px 14px;
+    margin-bottom:10px;
+    position:relative;
+  }
+  .tray.in .ticket{border-left-color:var(--stamp-green);}
+  .ticket .num{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:16px;
+    letter-spacing:1px;
+  }
+  .ticket .loc{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .ticket .dates{font-size:11px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
+  .ticket .actions{margin-top:10px;display:flex;gap:8px;}
+  .ticket .actions .btn{padding:6px 10px;font-size:10px;}
+  .stampmark{
+    position:absolute;top:10px;right:12px;
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:10px;
+    letter-spacing:2px;
+    border:2px solid var(--stamp-red);
+    color:var(--stamp-red);
+    padding:2px 6px;
+    transform:rotate(-6deg);
+    opacity:0.75;
+  }
+  .tray.in .stampmark{border-color:var(--stamp-green);color:var(--stamp-green);}
+
+  .empty{
+    font-size:12px;
+    color:var(--ink-soft);
+    padding:24px 10px;
+    text-align:center;
+    border:1px dashed var(--line);
+  }
+
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--paper);
+    padding:10px 20px;font-size:12px;letter-spacing:1px;
+    display:none;
+  }
+  .toast.show{display:block;}
+  .loading{text-align:center;padding:40px;color:var(--ink-soft);font-size:13px;}
+
+  .scanbox{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    padding:18px;
+    margin-bottom:22px;
+  }
+  .scanbox h2{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:14px;letter-spacing:2px;text-transform:uppercase;
+    margin:0 0 12px;
+  }
+  .modetoggle{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--ink);width:fit-content;}
+  .modetoggle button{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:11px;letter-spacing:1px;text-transform:uppercase;
+    padding:8px 16px;
+    border:none;background:transparent;color:var(--ink);
+    cursor:pointer;
+  }
+  .modetoggle button.active.out{background:var(--stamp-red);color:#fff;}
+  .modetoggle button.active.in{background:var(--stamp-green);color:#fff;}
+  .modetoggle button:not(.active){border-right:1px solid var(--ink);}
+
+  .dropzone{
+    border:2px dashed var(--ink-soft);
+    padding:26px;
+    text-align:center;
+    font-size:12px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    background:#fdfbf3;
+  }
+  .dropzone:hover{border-color:var(--ink);}
+  .dropzone.drag{border-color:var(--stamp-green);background:#eef3ea;}
+  .dropzone input{display:none;}
+
+  .scanprogress{margin-top:14px;}
+  .progitem{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:12px;padding:6px 0;border-bottom:1px solid var(--line);
+  }
+  .progitem .status{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);}
+  .progitem .status.done{color:var(--stamp-green);}
+  .progitem .status.busy{color:var(--stamp-red);}
+
+  .reviewtable{margin-top:16px;}
+  .reviewrow{
+    display:grid;
+    grid-template-columns:1.1fr 1.3fr 1fr auto;
+    gap:10px;
+    align-items:center;
+    background:#fff;
+    border:1px solid var(--line);
+    padding:10px 12px;
+    margin-bottom:8px;
+    font-size:12px;
+  }
+  .reviewrow.nomatch{border-left:4px solid var(--stamp-red);}
+  .reviewrow.matched{border-left:4px solid var(--stamp-green);}
+  .reviewrow input{
+    font-family:inherit;font-size:12px;padding:6px;border:1px solid var(--line);width:100%;
+  }
+  .reviewrow .snippet{font-size:10px;color:var(--ink-soft);grid-column:1/-1;margin-top:4px;font-style:italic;}
+  .reviewactions{margin-top:14px;display:flex;gap:10px;justify-content:flex-end;}
+  @media(max-width:700px){.reviewrow{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title-block">
+      <h1>BFR Tray Tracker</h1>
+      <div class="sub">Managing Agent Handover Log</div>
+    </div>
+    <div class="datestamp">
+      <div class="big" id="todayLabel">—</div>
+      <div>Kim Yew Integrated</div>
+    </div>
+  </header>
+
+  <div id="loading" class="loading">Loading log…</div>
+
+  <div id="app" style="display:none;">
+    <div class="stats">
+      <div class="stat out">
+        <div class="n" id="statOut">0</div>
+        <div class="l">Out with Techs</div>
+      </div>
+      <div class="stat in">
+        <div class="n" id="statIn">0</div>
+        <div class="l">In Tray, Ready</div>
+      </div>
+      <div class="stat">
+        <div class="n" id="statTotal">0</div>
+        <div class="l">Total Logged</div>
+      </div>
+    </div>
+
+    <div class="scanbox">
+      <h2>Bulk Scan &amp; Auto-Extract</h2>
+      <div class="modetoggle">
+        <button type="button" id="modeOutBtn" class="active out">Scanning Out</button>
+        <button type="button" id="modeInBtn" class="in">Scanning In (Returns)</button>
+      </div>
+      <div class="dropzone" id="dropzone">
+        <div id="dropzoneLabel">Drop BFR images or PDFs here, or click to choose files<br><span style="font-size:10px;">Accepts multiple files at once — JPG, PNG, PDF</span></div>
+        <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
+      </div>
+      <div class="scanprogress" id="scanProgress"></div>
+      <div class="reviewtable" id="reviewTable"></div>
+      <div class="reviewactions" id="reviewActions" style="display:none;">
+        <button class="btn secondary" id="discardScan">Discard</button>
+        <button class="btn green" id="confirmScan">Confirm &amp; Apply to Log</button>
+      </div>
+    </div>
+
+    <form class="addform" id="addForm">
+      <div class="field">
+        <label for="bfrNum">BFR Number</label>
+        <input id="bfrNum" type="text" placeholder="e.g. BFR-0231" required>
+      </div>
+      <div class="field">
+        <label for="bfrLoc">Location / Unit</label>
+        <input id="bfrLoc" type="text" placeholder="e.g. Blk 5 #12-34, ACMV">
+      </div>
+      <div class="field">
+        <label for="bfrDate">Date Scanned Out</label>
+        <input id="bfrDate" type="date" required>
+      </div>
+      <button type="submit" class="btn">+ Log Out to Tray</button>
+    </form>
+
+    <div class="searchrow">
+      <input type="text" id="search" placeholder="Search BFR number or location…">
+      <button class="btn secondary" id="clearSearch">Clear</button>
+    </div>
+
+    <div class="trays">
+      <div class="tray out">
+        <h2>Out Tray <span id="outCount">0</span></h2>
+        <div id="outList"></div>
+      </div>
+      <div class="tray in">
+        <h2>In Tray <span id="inCount">0</span></h2>
+        <div id="inList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'bfr-tracker-records';
+let records = [];
+
+function todayStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function fmtDate(s){
+  if(!s) return '—';
+  const d = new Date(s+'T00:00:00');
+  return d.toLocaleDateString('en-SG',{day:'2-digit',month:'short',year:'numeric'});
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1800);
+}
+function uid(){
+  return 'r'+Date.now()+Math.random().toString(36).slice(2,7);
+}
+
+async function loadRecords(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    records = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    records = [];
+  }
+}
+async function saveRecords(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }catch(e){
+    showToast('Save failed — try again');
+  }
+}
+
+function render(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const filtered = records.filter(r=>{
+    if(!q) return true;
+    return (r.bfrNumber||'').toLowerCase().includes(q) || (r.location||'').toLowerCase().includes(q);
+  });
+
+  const outItems = filtered.filter(r=>!r.scannedInDate).sort((a,b)=> (b.scannedOutDate||'').localeCompare(a.scannedOutDate||''));
+  const inItems = filtered.filter(r=>r.scannedInDate).sort((a,b)=> (b.scannedInDate||'').localeCompare(a.scannedInDate||''));
+
+  document.getElementById('outCount').textContent = '('+outItems.length+')';
+  document.getElementById('inCount').textContent = '('+inItems.length+')';
+  document.getElementById('statOut').textContent = records.filter(r=>!r.scannedInDate).length;
+  document.getElementById('statIn').textContent = records.filter(r=>r.scannedInDate).length;
+  document.getElementById('statTotal').textContent = records.length;
+
+  const outList = document.getElementById('outList');
+  const inList = document.getElementById('inList');
+
+  outList.innerHTML = outItems.length ? outItems.map(r=>`
+    <div class="ticket">
+      <div class="stampmark">PENDING</div>
+      <div class="num">${escapeHtml(r.bfrNumber)}</div>
+      <div class="loc">${escapeHtml(r.location||'No location noted')}</div>
+      <div class="dates">Scanned out: ${fmtDate(r.scannedOutDate)}</div>
+      <div class="actions">
+        <button class="btn green" data-action="return" data-id="${r.id}">Mark Returned</button>
+        <button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>
+      </div>
+    </div>
+  `).join('') : '<div class="empty">No BFRs currently out. Log one above once scanned.</div>';
+
+  inList.innerHTML = inItems.length ? inItems.map(r=>`
+    <div class="ticket">
+      <div class="stampmark">COMPLETE</div>
+      <div class="num">${escapeHtml(r.bfrNumber)}</div>
+      <div class="loc">${escapeHtml(r.location||'No location noted')}</div>
+      <div class="dates">
+        Out: ${fmtDate(r.scannedOutDate)}<br>
+        In: ${fmtDate(r.scannedInDate)}
+      </div>
+      <div class="actions">
+        <button class="btn secondary" data-action="reopen" data-id="${r.id}">Reopen</button>
+        <button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>
+      </div>
+    </div>
+  `).join('') : '<div class="empty">Nothing marked returned yet.</div>';
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.getElementById('addForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const num = document.getElementById('bfrNum').value.trim();
+  const loc = document.getElementById('bfrLoc').value.trim();
+  const date = document.getElementById('bfrDate').value || todayStr();
+  if(!num) return;
+  records.push({id:uid(), bfrNumber:num, location:loc, scannedOutDate:date, scannedInDate:null});
+  await saveRecords();
+  document.getElementById('bfrNum').value='';
+  document.getElementById('bfrLoc').value='';
+  document.getElementById('bfrDate').value = todayStr();
+  render();
+  showToast('Logged to Out Tray');
+  document.getElementById('bfrNum').focus();
+});
+
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('clearSearch').addEventListener('click', ()=>{
+  document.getElementById('search').value='';
+  render();
+});
+
+document.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button[data-action]');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const action = btn.dataset.action;
+  const rec = records.find(r=>r.id===id);
+  if(!rec) return;
+
+  if(action==='return'){
+    rec.scannedInDate = todayStr();
+    await saveRecords();
+    render();
+    showToast('Moved to In Tray');
+  } else if(action==='reopen'){
+    rec.scannedInDate = null;
+    await saveRecords();
+    render();
+    showToast('Reopened — back in Out Tray');
+  } else if(action==='delete'){
+    if(confirm('Delete BFR '+rec.bfrNumber+' from the log? This cannot be undone.')){
+      records = records.filter(r=>r.id!==id);
+      await saveRecords();
+      render();
+      showToast('Entry deleted');
+    }
+  }
+});
+
+// ---------- Bulk Scan & OCR ----------
+let scanMode = 'out';
+let reviewItems = [];
+
+document.getElementById('modeOutBtn').addEventListener('click', ()=>{
+  scanMode = 'out';
+  document.getElementById('modeOutBtn').classList.add('active');
+  document.getElementById('modeInBtn').classList.remove('active');
+});
+document.getElementById('modeInBtn').addEventListener('click', ()=>{
+  scanMode = 'in';
+  document.getElementById('modeInBtn').classList.add('active');
+  document.getElementById('modeOutBtn').classList.remove('active');
+});
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+dropzone.addEventListener('click', ()=>fileInput.click());
+dropzone.addEventListener('dragover', (e)=>{e.preventDefault();dropzone.classList.add('drag');});
+dropzone.addEventListener('dragleave', ()=>dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', (e)=>{
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  handleFiles(Array.from(e.dataTransfer.files));
+});
+fileInput.addEventListener('change', (e)=>{
+  handleFiles(Array.from(e.target.files));
+  fileInput.value = '';
+});
+
+function extractBfrNumber(text){
+  const patterns = [
+    /BFR[\s#\-\/:]*([A-Z0-9][A-Z0-9\-\/]{2,14})/i,
+    /(?:BFR\s*No\.?|Report\s*No\.?|Fault\s*Report\s*No\.?)\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/]{2,14})/i
+  ];
+  for(const p of patterns){
+    const m = text.match(p);
+    if(m && m[1]) return ('BFR-'+m[1].replace(/^BFR[-\s]?/i,'')).replace(/^BFR-BFR-/i,'BFR-');
+  }
+  return '';
+}
+function extractLocation(text){
+  const m = text.match(/(?:Location|Unit|Block|Blk)\s*[:\-]?\s*([A-Za-z0-9#,\.\- ]{4,40})/i);
+  return m ? m[1].trim() : '';
+}
+
+async function ocrImageSource(imgSource){
+  const result = await Tesseract.recognize(imgSource, 'eng');
+  return result.data.text || '';
+}
+
+async function pdfPagesToImages(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  const canvases = [];
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({scale:2});
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({canvasContext:canvas.getContext('2d'), viewport}).promise;
+    canvases.push(canvas);
+  }
+  return canvases;
+}
+
+function setProgress(label, status, cls){
+  const box = document.getElementById('scanProgress');
+  let row = box.querySelector('[data-label="'+label+'"]');
+  if(!row){
+    row = document.createElement('div');
+    row.className = 'progitem';
+    row.dataset.label = label;
+    row.innerHTML = `<span>${escapeHtml(label)}</span><span class="status"></span>`;
+    box.appendChild(row);
+  }
+  const s = row.querySelector('.status');
+  s.textContent = status;
+  s.className = 'status '+(cls||'');
+}
+
+async function handleFiles(files){
+  if(!files.length) return;
+  document.getElementById('scanProgress').innerHTML = '';
+  reviewItems = [];
+  document.getElementById('reviewTable').innerHTML = '';
+  document.getElementById('reviewActions').style.display = 'none';
+
+  for(const file of files){
+    setProgress(file.name, 'Reading…', 'busy');
+    try{
+      let texts = [];
+      if(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')){
+        const canvases = await pdfPagesToImages(file);
+        for(let i=0;i<canvases.length;i++){
+          setProgress(file.name, `OCR page ${i+1}/${canvases.length}…`, 'busy');
+          const t = await ocrImageSource(canvases[i]);
+          texts.push(t);
+        }
+      } else {
+        setProgress(file.name, 'Running OCR…', 'busy');
+        const t = await ocrImageSource(file);
+        texts.push(t);
+      }
+
+      texts.forEach((text, idx)=>{
+        const bfr = extractBfrNumber(text);
+        const loc = extractLocation(text);
+        reviewItems.push({
+          source: file.name + (texts.length>1 ? ' (page '+(idx+1)+')' : ''),
+          bfrNumber: bfr,
+          location: loc,
+          snippet: text.replace(/\s+/g,' ').trim().slice(0,140)
+        });
+      });
+      setProgress(file.name, 'Done', 'done');
+    }catch(err){
+      setProgress(file.name, 'Failed to read', 'busy');
+    }
+  }
+  renderReview();
+}
+
+function renderReview(){
+  const box = document.getElementById('reviewTable');
+  if(!reviewItems.length){
+    box.innerHTML = '';
+    document.getElementById('reviewActions').style.display = 'none';
+    return;
+  }
+  box.innerHTML = reviewItems.map((it,i)=>{
+    const existingMatch = scanMode==='in' ? records.find(r=>!r.scannedInDate && r.bfrNumber.toLowerCase()===it.bfrNumber.toLowerCase()) : null;
+    const matchClass = scanMode==='in' ? (existingMatch ? 'matched' : 'nomatch') : '';
+    const matchNote = scanMode==='in' ? (existingMatch ? '✓ Matches pending Out Tray entry' : '⚠ No matching Out Tray entry — will log as new') : '';
+    return `
+    <div class="reviewrow ${matchClass}" data-idx="${i}">
+      <input type="text" class="rv-bfr" value="${escapeHtml(it.bfrNumber)}" placeholder="BFR number">
+      <input type="text" class="rv-loc" value="${escapeHtml(it.location)}" placeholder="Location (optional)">
+      <div style="font-size:10px;color:var(--ink-soft);">${escapeHtml(it.source)}${matchNote?'<br>'+matchNote:''}</div>
+      <button class="btn secondary rv-remove" data-idx="${i}" style="padding:6px 10px;font-size:10px;">Remove</button>
+      <div class="snippet">OCR read: "${escapeHtml(it.snippet)}…"</div>
+    </div>`;
+  }).join('');
+  document.getElementById('reviewActions').style.display = 'flex';
+
+  box.querySelectorAll('.rv-bfr').forEach((inp,i)=>inp.addEventListener('input',()=>{reviewItems[i].bfrNumber=inp.value; renderReview();}));
+  box.querySelectorAll('.rv-loc').forEach((inp,i)=>inp.addEventListener('input',()=>{reviewItems[i].location=inp.value;}));
+  box.querySelectorAll('.rv-remove').forEach(btn=>btn.addEventListener('click',()=>{
+    reviewItems.splice(parseInt(btn.dataset.idx),1);
+    renderReview();
+  }));
+}
+
+document.getElementById('discardScan').addEventListener('click', ()=>{
+  reviewItems = [];
+  document.getElementById('reviewTable').innerHTML = '';
+  document.getElementById('scanProgress').innerHTML = '';
+  document.getElementById('reviewActions').style.display = 'none';
+});
+
+document.getElementById('confirmScan').addEventListener('click', async ()=>{
+  let added = 0, matched = 0;
+  for(const it of reviewItems){
+    if(!it.bfrNumber) continue;
+    if(scanMode === 'out'){
+      records.push({id:uid(), bfrNumber:it.bfrNumber, location:it.location, scannedOutDate:todayStr(), scannedInDate:null});
+      added++;
+    } else {
+      const existing = records.find(r=>!r.scannedInDate && r.bfrNumber.toLowerCase()===it.bfrNumber.toLowerCase());
+      if(existing){
+        existing.scannedInDate = todayStr();
+        matched++;
+      } else {
+        records.push({id:uid(), bfrNumber:it.bfrNumber, location:it.location, scannedOutDate:null, scannedInDate:todayStr()});
+        added++;
+      }
+    }
+  }
+  await saveRecords();
+  reviewItems = [];
+  document.getElementById('reviewTable').innerHTML = '';
+  document.getElementById('scanProgress').innerHTML = '';
+  document.getElementById('reviewActions').style.display = 'none';
+  render();
+  showToast(`Applied: ${added} new, ${matched} matched & returned`);
+});
+
+(async function init(){
+  document.getElementById('bfrDate').value = todayStr();
+  const today = new Date();
+  document.getElementById('todayLabel').textContent = today.toLocaleDateString('en-SG',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  await loadRecords();
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='block';
+  render();
+})();
+</script>
+</body>
+</html>
