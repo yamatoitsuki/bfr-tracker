@@ -132,8 +132,9 @@
     font-size:13px;
   }
 
-  .trays{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
-  @media(max-width:760px){.trays{grid-template-columns:1fr;} form.addform{grid-template-columns:1fr;}}
+  .trays{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+  @media(max-width:1000px){.trays{grid-template-columns:1fr;}}
+  @media(max-width:760px){form.addform{grid-template-columns:1fr;}}
 
   .tray h2{
     font-family:'Arial Black',Arial,sans-serif;
@@ -142,12 +143,25 @@
     text-transform:uppercase;
     padding-bottom:8px;
     border-bottom:2px solid var(--ink);
-    margin-bottom:14px;
+    margin-bottom:10px;
     display:flex;
     justify-content:space-between;
   }
   .tray.out h2{color:var(--stamp-red);border-color:var(--stamp-red);}
   .tray.in h2{color:var(--stamp-green);border-color:var(--stamp-green);}
+  .tray.archived h2{color:var(--ink-soft);border-color:var(--ink-soft);}
+
+  .trayfilter{
+    width:100%;
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:0.5px;
+    padding:6px 8px;
+    margin-bottom:14px;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+  }
 
   .ticket{
     background:var(--paper);
@@ -158,6 +172,7 @@
     position:relative;
   }
   .tray.in .ticket{border-left-color:var(--stamp-green);}
+  .tray.archived .ticket{border-left-color:var(--ink-soft);}
   .ticket .num{
     font-family:'Arial Black',Arial,sans-serif;
     font-size:16px;
@@ -165,8 +180,8 @@
   }
   .ticket .loc{font-size:12px;color:var(--ink-soft);margin-top:2px;}
   .ticket .dates{font-size:11px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
-  .ticket .actions{margin-top:10px;display:flex;gap:8px;}
-  .ticket .actions .btn{padding:6px 10px;font-size:10px;}
+  .ticket .actions{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;}
+  .ticket .actions .btn{padding:6px 9px;font-size:10px;}
   .stampmark{
     position:absolute;top:10px;right:12px;
     font-family:'Arial Black',Arial,sans-serif;
@@ -179,6 +194,7 @@
     opacity:0.75;
   }
   .tray.in .stampmark{border-color:var(--stamp-green);color:var(--stamp-green);}
+  .tray.archived .stampmark{border-color:var(--ink-soft);color:var(--ink-soft);}
 
   .empty{
     font-size:12px;
@@ -262,6 +278,78 @@
   .reviewrow .snippet{font-size:10px;color:var(--ink-soft);grid-column:1/-1;margin-top:4px;font-style:italic;}
   .reviewactions{margin-top:14px;display:flex;gap:10px;justify-content:flex-end;}
   @media(max-width:700px){.reviewrow{grid-template-columns:1fr;}}
+
+  .authbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .adminbadge{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--stamp-green);
+    border:1px solid var(--stamp-green);
+    padding:4px 8px;
+  }
+  .viewerbadge{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    border:1px solid var(--ink-soft);
+    padding:4px 8px;
+  }
+  .authbtn{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:10px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:6px 12px;
+    border:1px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .authbtn:hover{background:var(--ink);color:var(--paper);}
+
+  .loginpanel{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    padding:16px;
+    margin-bottom:22px;
+    display:none;
+    max-width:320px;
+  }
+  .loginpanel.show{display:block;}
+  .loginpanel h3{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:12px;letter-spacing:1.5px;text-transform:uppercase;
+    margin:0 0 10px;
+  }
+  .loginpanel input{
+    width:100%;
+    font-family:inherit;
+    font-size:14px;
+    padding:8px;
+    border:1px solid var(--line);
+    margin-bottom:8px;
+    box-sizing:border-box;
+  }
+  .loginpanel .row{display:flex;gap:8px;}
+  .loginpanel .err{font-size:11px;color:var(--stamp-red);margin-top:-4px;margin-bottom:8px;display:none;}
+  .loginpanel .err.show{display:block;}
+
+  .viewernote{
+    font-size:12px;
+    color:var(--ink-soft);
+    border:1px dashed var(--line);
+    padding:10px 14px;
+    margin-bottom:20px;
+    background:var(--paper);
+  }
 </style>
 </head>
 <body>
@@ -271,11 +359,29 @@
       <h1>BFR Tray Tracker</h1>
       <div class="sub">Managing Agent Handover Log</div>
     </div>
-    <div class="datestamp">
-      <div class="big" id="todayLabel">—</div>
-      <div>Kim Yew Integrated</div>
+    <div class="authbar">
+      <div class="datestamp">
+        <div class="big" id="todayLabel">—</div>
+        <div>Kim Yew Integrated</div>
+      </div>
+      <span id="authBadge"></span>
+      <button class="authbtn" id="authToggleBtn">Admin Login</button>
     </div>
   </header>
+
+  <div class="loginpanel" id="loginPanel">
+    <h3>Admin Login</h3>
+    <div class="err" id="loginErr">Incorrect password. Try again.</div>
+    <input type="password" id="loginPassword" placeholder="Enter admin password">
+    <div class="row">
+      <button class="btn" id="loginSubmit" style="flex:1;">Unlock</button>
+      <button class="btn secondary" id="loginCancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="viewerNote" class="viewernote" style="display:none;">
+    You're viewing in read-only mode. You can see BFR status and search the log, but logging, scanning, and marking returns requires admin login.
+  </div>
 
   <div id="loading" class="loading">Loading log…</div>
 
@@ -295,46 +401,48 @@
       </div>
     </div>
 
-    <div class="scanbox">
-      <h2>Bulk Scan &amp; Auto-Extract</h2>
-      <div class="modetoggle">
-        <button type="button" id="modeOutBtn" class="active out">Scanning Out</button>
-        <button type="button" id="modeInBtn" class="in">Scanning In (Returns)</button>
+    <div id="adminControls" style="display:none;">
+      <div class="scanbox">
+        <h2>Bulk Scan &amp; Auto-Extract</h2>
+        <div class="modetoggle">
+          <button type="button" id="modeOutBtn" class="active out">Scanning Out</button>
+          <button type="button" id="modeInBtn" class="in">Scanning In (Returns)</button>
+        </div>
+        <div class="dropzone" id="dropzone">
+          <div id="dropzoneLabel">Drop BFR images or PDFs here, or click to choose files<br><span style="font-size:10px;">Accepts multiple files at once — JPG, PNG, PDF</span></div>
+          <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
+        </div>
+        <div class="scanprogress" id="scanProgress"></div>
+        <div class="reviewtable" id="reviewTable"></div>
+        <div class="reviewactions" id="reviewActions" style="display:none;">
+          <button class="btn secondary" id="discardScan">Discard</button>
+          <button class="btn green" id="confirmScan">Confirm &amp; Apply to Log</button>
+        </div>
       </div>
-      <div class="dropzone" id="dropzone">
-        <div id="dropzoneLabel">Drop BFR images or PDFs here, or click to choose files<br><span style="font-size:10px;">Accepts multiple files at once — JPG, PNG, PDF</span></div>
-        <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
-      </div>
-      <div class="scanprogress" id="scanProgress"></div>
-      <div class="reviewtable" id="reviewTable"></div>
-      <div class="reviewactions" id="reviewActions" style="display:none;">
-        <button class="btn secondary" id="discardScan">Discard</button>
-        <button class="btn green" id="confirmScan">Confirm &amp; Apply to Log</button>
-      </div>
-    </div>
 
-    <form class="addform" id="addForm">
-      <div class="field">
-        <label for="bfrNum">BFR Number</label>
-        <input id="bfrNum" type="text" placeholder="e.g. 0231" required>
-      </div>
-      <div class="field">
-        <label for="bfrDept">Department</label>
-        <select id="bfrDept">
-          <option value="">— Select —</option>
-          <option value="ACMV">ACMV</option>
-          <option value="BUILDING">BUILDING</option>
-          <option value="MECHANICAL">MECHANICAL</option>
-          <option value="ELECTRICAL">ELECTRICAL</option>
-          <option value="OTIS">OTIS</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="bfrDate">Date Scanned Out</label>
-        <input id="bfrDate" type="date" required>
-      </div>
-      <button type="submit" class="btn">+ Log Out to Tray</button>
-    </form>
+      <form class="addform" id="addForm">
+        <div class="field">
+          <label for="bfrNum">BFR Number</label>
+          <input id="bfrNum" type="text" placeholder="e.g. 0231" required>
+        </div>
+        <div class="field">
+          <label for="bfrDept">Department</label>
+          <select id="bfrDept">
+            <option value="">— Select —</option>
+            <option value="ACMV">ACMV</option>
+            <option value="BUILDING">BUILDING</option>
+            <option value="MECHANICAL">MECHANICAL</option>
+            <option value="ELECTRICAL">ELECTRICAL</option>
+            <option value="OTIS">OTIS</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="bfrDate">Date Scanned Out</label>
+          <input id="bfrDate" type="date" required>
+        </div>
+        <button type="submit" class="btn">+ Log Out to Tray</button>
+      </form>
+    </div>
 
     <div class="searchrow">
       <input type="text" id="search" placeholder="Search BFR number or department…">
@@ -344,11 +452,42 @@
     <div class="trays">
       <div class="tray out">
         <h2>Out Tray <span id="outCount">0</span></h2>
+        <select class="trayfilter" id="filterOut">
+          <option value="ALL">Filter: ALL</option>
+          <option value="NONE">Filter: NONE</option>
+          <option value="ACMV">ACMV</option>
+          <option value="BUILDING">BUILDING</option>
+          <option value="MECHANICAL">MECHANICAL</option>
+          <option value="ELECTRICAL">ELECTRICAL</option>
+          <option value="OTIS">OTIS</option>
+        </select>
         <div id="outList"></div>
       </div>
       <div class="tray in">
         <h2>In Tray <span id="inCount">0</span></h2>
+        <select class="trayfilter" id="filterIn">
+          <option value="ALL">Filter: ALL</option>
+          <option value="NONE">Filter: NONE</option>
+          <option value="ACMV">ACMV</option>
+          <option value="BUILDING">BUILDING</option>
+          <option value="MECHANICAL">MECHANICAL</option>
+          <option value="ELECTRICAL">ELECTRICAL</option>
+          <option value="OTIS">OTIS</option>
+        </select>
         <div id="inList"></div>
+      </div>
+      <div class="tray archived">
+        <h2>Archived <span id="archivedCount">0</span></h2>
+        <select class="trayfilter" id="filterArchived">
+          <option value="ALL">Filter: ALL</option>
+          <option value="NONE">Filter: NONE</option>
+          <option value="ACMV">ACMV</option>
+          <option value="BUILDING">BUILDING</option>
+          <option value="MECHANICAL">MECHANICAL</option>
+          <option value="ELECTRICAL">ELECTRICAL</option>
+          <option value="OTIS">OTIS</option>
+        </select>
+        <div id="archivedList"></div>
       </div>
     </div>
   </div>
@@ -398,6 +537,14 @@ async function saveRecords(){
   }
 }
 
+let trayFilters = { out: 'ALL', in: 'ALL', archived: 'ALL' };
+
+function matchesFilter(r, filterVal){
+  if(filterVal === 'NONE') return false;
+  if(filterVal === 'ALL') return true;
+  return (r.department||'').toUpperCase() === filterVal;
+}
+
 function render(){
   const q = document.getElementById('search').value.trim().toLowerCase();
   const filtered = records.filter(r=>{
@@ -405,17 +552,24 @@ function render(){
     return (r.bfrNumber||'').toLowerCase().includes(q) || (r.department||'').toLowerCase().includes(q);
   });
 
-  const outItems = filtered.filter(r=>!r.scannedInDate).sort((a,b)=> (b.scannedOutDate||'').localeCompare(a.scannedOutDate||''));
-  const inItems = filtered.filter(r=>r.scannedInDate).sort((a,b)=> (b.scannedInDate||'').localeCompare(a.scannedInDate||''));
+  const outAll = filtered.filter(r=>!r.scannedInDate && !r.archived);
+  const inAll = filtered.filter(r=>r.scannedInDate && !r.archived);
+  const archivedAll = filtered.filter(r=>r.archived);
 
-  document.getElementById('outCount').textContent = '('+outItems.length+')';
-  document.getElementById('inCount').textContent = '('+inItems.length+')';
-  document.getElementById('statOut').textContent = records.filter(r=>!r.scannedInDate).length;
-  document.getElementById('statIn').textContent = records.filter(r=>r.scannedInDate).length;
+  const outItems = outAll.filter(r=>matchesFilter(r, trayFilters.out)).sort((a,b)=> (b.scannedOutDate||'').localeCompare(a.scannedOutDate||''));
+  const inItems = inAll.filter(r=>matchesFilter(r, trayFilters.in)).sort((a,b)=> (b.scannedInDate||'').localeCompare(a.scannedInDate||''));
+  const archivedItems = archivedAll.filter(r=>matchesFilter(r, trayFilters.archived)).sort((a,b)=> (b.scannedInDate||'').localeCompare(a.scannedInDate||''));
+
+  document.getElementById('outCount').textContent = '('+outItems.length+'/'+outAll.length+')';
+  document.getElementById('inCount').textContent = '('+inItems.length+'/'+inAll.length+')';
+  document.getElementById('archivedCount').textContent = '('+archivedItems.length+'/'+archivedAll.length+')';
+  document.getElementById('statOut').textContent = records.filter(r=>!r.scannedInDate && !r.archived).length;
+  document.getElementById('statIn').textContent = records.filter(r=>r.scannedInDate && !r.archived).length;
   document.getElementById('statTotal').textContent = records.length;
 
   const outList = document.getElementById('outList');
   const inList = document.getElementById('inList');
+  const archivedList = document.getElementById('archivedList');
 
   outList.innerHTML = outItems.length ? outItems.map(r=>`
     <div class="ticket">
@@ -423,12 +577,13 @@ function render(){
       <div class="num">${escapeHtml(stripBfrPrefix(r.bfrNumber))}</div>
       <div class="loc">${escapeHtml(r.department||'No department noted')}</div>
       <div class="dates">Scanned out: ${fmtDate(r.scannedOutDate)}</div>
+      ${isAdmin ? `
       <div class="actions">
         <button class="btn green" data-action="return" data-id="${r.id}">Mark Returned</button>
         <button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>
-      </div>
+      </div>` : ''}
     </div>
-  `).join('') : '<div class="empty">No BFRs currently out. Log one above once scanned.</div>';
+  `).join('') : `<div class="empty">${outAll.length ? 'No BFRs match this filter.' : 'No BFRs currently out. Log one above once scanned.'}</div>`;
 
   inList.innerHTML = inItems.length ? inItems.map(r=>`
     <div class="ticket">
@@ -439,12 +594,31 @@ function render(){
         Out: ${fmtDate(r.scannedOutDate)}<br>
         In: ${fmtDate(r.scannedInDate)}
       </div>
+      ${isAdmin ? `
       <div class="actions">
         <button class="btn secondary" data-action="reopen" data-id="${r.id}">Reopen</button>
+        <button class="btn secondary" data-action="archive" data-id="${r.id}">Archive</button>
         <button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>
-      </div>
+      </div>` : ''}
     </div>
-  `).join('') : '<div class="empty">Nothing marked returned yet.</div>';
+  `).join('') : `<div class="empty">${inAll.length ? 'No BFRs match this filter.' : 'Nothing marked returned yet.'}</div>`;
+
+  archivedList.innerHTML = archivedItems.length ? archivedItems.map(r=>`
+    <div class="ticket">
+      <div class="stampmark">ARCHIVED</div>
+      <div class="num">${escapeHtml(stripBfrPrefix(r.bfrNumber))}</div>
+      <div class="loc">${escapeHtml(r.department||'No department noted')}</div>
+      <div class="dates">
+        Out: ${fmtDate(r.scannedOutDate)}<br>
+        In: ${fmtDate(r.scannedInDate)}
+      </div>
+      ${isAdmin ? `
+      <div class="actions">
+        <button class="btn secondary" data-action="unarchive" data-id="${r.id}">Unarchive</button>
+        <button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>
+      </div>` : ''}
+    </div>
+  `).join('') : `<div class="empty">${archivedAll.length ? 'No BFRs match this filter.' : 'Nothing archived yet.'}</div>`;
 }
 
 function escapeHtml(s){
@@ -453,6 +627,7 @@ function escapeHtml(s){
 
 document.getElementById('addForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
+  if(!isAdmin) return;
   const num = document.getElementById('bfrNum').value.trim();
   const dept = document.getElementById('bfrDept').value;
   const date = document.getElementById('bfrDate').value || todayStr();
@@ -476,6 +651,7 @@ document.getElementById('clearSearch').addEventListener('click', ()=>{
 document.addEventListener('click', async (e)=>{
   const btn = e.target.closest('button[data-action]');
   if(!btn) return;
+  if(!isAdmin) return;
   const id = btn.dataset.id;
   const action = btn.dataset.action;
   const rec = records.find(r=>r.id===id);
@@ -488,9 +664,20 @@ document.addEventListener('click', async (e)=>{
     showToast('Moved to In Tray');
   } else if(action==='reopen'){
     rec.scannedInDate = null;
+    rec.archived = false;
     await saveRecords();
     render();
     showToast('Reopened — back in Out Tray');
+  } else if(action==='archive'){
+    rec.archived = true;
+    await saveRecords();
+    render();
+    showToast('Archived');
+  } else if(action==='unarchive'){
+    rec.archived = false;
+    await saveRecords();
+    render();
+    showToast('Moved back to In Tray');
   } else if(action==='delete'){
     if(confirm('Delete BFR '+rec.bfrNumber+' from the log? This cannot be undone.')){
       records = records.filter(r=>r.id!==id);
@@ -499,6 +686,19 @@ document.addEventListener('click', async (e)=>{
       showToast('Entry deleted');
     }
   }
+});
+
+document.getElementById('filterOut').addEventListener('change', (e)=>{
+  trayFilters.out = e.target.value;
+  render();
+});
+document.getElementById('filterIn').addEventListener('change', (e)=>{
+  trayFilters.in = e.target.value;
+  render();
+});
+document.getElementById('filterArchived').addEventListener('change', (e)=>{
+  trayFilters.archived = e.target.value;
+  render();
 });
 
 // ---------- Bulk Scan & OCR ----------
@@ -677,6 +877,7 @@ document.getElementById('discardScan').addEventListener('click', ()=>{
 });
 
 document.getElementById('confirmScan').addEventListener('click', async ()=>{
+  if(!isAdmin) return;
   let added = 0, matched = 0;
   for(const it of reviewItems){
     if(!it.bfrNumber) continue;
@@ -703,7 +904,80 @@ document.getElementById('confirmScan').addEventListener('click', async ()=>{
   showToast(`Applied: ${added} new, ${matched} matched & returned`);
 });
 
+// ---------- Admin Auth ----------
+const ADMIN_SESSION_KEY = 'bfr-admin-session';
+const ADMIN_PASSWORD = '666666';
+let isAdmin = false;
+
+function checkAdminSession(){
+  isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+}
+
+function updateAuthUI(){
+  const badge = document.getElementById('authBadge');
+  const toggleBtn = document.getElementById('authToggleBtn');
+  const adminControls = document.getElementById('adminControls');
+  const viewerNote = document.getElementById('viewerNote');
+
+  if(isAdmin){
+    badge.innerHTML = '<span class="adminbadge">Admin Mode</span>';
+    toggleBtn.textContent = 'Logout';
+    adminControls.style.display = 'block';
+    viewerNote.style.display = 'none';
+  } else {
+    badge.innerHTML = '<span class="viewerbadge">View Only</span>';
+    toggleBtn.textContent = 'Admin Login';
+    adminControls.style.display = 'none';
+    viewerNote.style.display = 'block';
+  }
+}
+
+function showLoginPanel(){
+  document.getElementById('loginPanel').classList.add('show');
+  document.getElementById('loginErr').classList.remove('show');
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginPassword').focus();
+}
+function hideLoginPanel(){
+  document.getElementById('loginPanel').classList.remove('show');
+}
+
+document.getElementById('authToggleBtn').addEventListener('click', ()=>{
+  if(isAdmin){
+    isAdmin = false;
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    updateAuthUI();
+    render();
+    showToast('Logged out — view-only mode');
+  } else {
+    showLoginPanel();
+  }
+});
+
+document.getElementById('loginCancel').addEventListener('click', hideLoginPanel);
+
+document.getElementById('loginSubmit').addEventListener('click', attemptLogin);
+document.getElementById('loginPassword').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') attemptLogin();
+});
+
+function attemptLogin(){
+  const pw = document.getElementById('loginPassword').value;
+  if(pw === ADMIN_PASSWORD){
+    isAdmin = true;
+    localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+    hideLoginPanel();
+    updateAuthUI();
+    render();
+    showToast('Admin unlocked');
+  } else {
+    document.getElementById('loginErr').classList.add('show');
+  }
+}
+
 (async function init(){
+  checkAdminSession();
+  updateAuthUI();
   document.getElementById('bfrDate').value = todayStr();
   const today = new Date();
   document.getElementById('todayLabel').textContent = today.toLocaleDateString('en-SG',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
