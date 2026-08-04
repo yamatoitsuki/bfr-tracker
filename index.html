@@ -6,6 +6,9 @@
 <title>BFR Tray Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --kraft:#e8dfc8;
@@ -496,7 +499,23 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY = 'bfr-tracker-records';
+// ---------- Firebase Config ----------
+// Fill these in from your Firebase project settings (see setup guide provided separately).
+const firebaseConfig = {
+  apiKey: "AIzaSyDL9fPfm9ZcWFzUZAhzRe75UC7Kv2lr2uU",
+  authDomain: "bfr-tracker.firebaseapp.com",
+  projectId: "bfr-tracker",
+  storageBucket: "bfr-tracker.firebasestorage.app",
+  messagingSenderId: "291923466374",
+  appId: "1:291923466374:web:68ba62def5f988afa4d907"
+};
+const ADMIN_EMAIL = "admin@bfrtracker.local"; // fixed email paired with the one Firebase Auth user you create
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const recordsDocRef = db.collection('bfrtracker').doc('records');
+
 let records = [];
 
 function todayStr(){
@@ -521,21 +540,36 @@ function stripBfrPrefix(s){
   return (s||'').replace(/^BFR[\s\-#]*/i,'').trim() || (s||'');
 }
 
-async function loadRecords(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    records = raw ? JSON.parse(raw) : [];
-  }catch(e){
-    records = [];
-  }
+// Live sync: any device viewing the page gets updates the moment Firestore changes.
+function subscribeToRecords(onFirstLoad){
+  let firstLoadDone = false;
+  recordsDocRef.onSnapshot((snap)=>{
+    const data = snap.exists ? snap.data() : null;
+    records = (data && Array.isArray(data.data)) ? data.data : [];
+    if(!firstLoadDone){
+      firstLoadDone = true;
+      if(onFirstLoad) onFirstLoad();
+    }
+    render();
+  }, (err)=>{
+    console.error('Firestore sync error:', err);
+    showToast('Sync error — check connection');
+    if(!firstLoadDone){
+      firstLoadDone = true;
+      if(onFirstLoad) onFirstLoad();
+    }
+  });
 }
+
 async function saveRecords(){
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    await recordsDocRef.set({ data: records });
   }catch(e){
-    showToast('Save failed — try again');
+    console.error(e);
+    showToast('Save failed — check connection or admin login');
   }
 }
+
 
 let trayFilters = { out: 'ALL', in: 'ALL', archived: 'ALL' };
 
@@ -904,14 +938,8 @@ document.getElementById('confirmScan').addEventListener('click', async ()=>{
   showToast(`Applied: ${added} new, ${matched} matched & returned`);
 });
 
-// ---------- Admin Auth ----------
-const ADMIN_SESSION_KEY = 'bfr-admin-session';
-const ADMIN_PASSWORD = '666666';
+// ---------- Admin Auth (Firebase Authentication) ----------
 let isAdmin = false;
-
-function checkAdminSession(){
-  isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
-}
 
 function updateAuthUI(){
   const badge = document.getElementById('authBadge');
@@ -944,10 +972,7 @@ function hideLoginPanel(){
 
 document.getElementById('authToggleBtn').addEventListener('click', ()=>{
   if(isAdmin){
-    isAdmin = false;
-    localStorage.removeItem(ADMIN_SESSION_KEY);
-    updateAuthUI();
-    render();
+    auth.signOut();
     showToast('Logged out — view-only mode');
   } else {
     showLoginPanel();
@@ -961,30 +986,38 @@ document.getElementById('loginPassword').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter') attemptLogin();
 });
 
-function attemptLogin(){
+async function attemptLogin(){
   const pw = document.getElementById('loginPassword').value;
-  if(pw === ADMIN_PASSWORD){
-    isAdmin = true;
-    localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+  const submitBtn = document.getElementById('loginSubmit');
+  submitBtn.textContent = 'Checking…';
+  submitBtn.disabled = true;
+  try{
+    await auth.signInWithEmailAndPassword(ADMIN_EMAIL, pw);
     hideLoginPanel();
-    updateAuthUI();
-    render();
     showToast('Admin unlocked');
-  } else {
+  }catch(err){
     document.getElementById('loginErr').classList.add('show');
   }
+  submitBtn.textContent = 'Unlock';
+  submitBtn.disabled = false;
 }
 
+// Firebase Auth drives isAdmin — real server-side check, not a client-side flag.
+auth.onAuthStateChanged((user)=>{
+  isAdmin = !!user;
+  updateAuthUI();
+  render();
+});
+
 (async function init(){
-  checkAdminSession();
   updateAuthUI();
   document.getElementById('bfrDate').value = todayStr();
   const today = new Date();
   document.getElementById('todayLabel').textContent = today.toLocaleDateString('en-SG',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-  await loadRecords();
-  document.getElementById('loading').style.display='none';
-  document.getElementById('app').style.display='block';
-  render();
+  subscribeToRecords(()=>{
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='block';
+  });
 })();
 </script>
 </body>
