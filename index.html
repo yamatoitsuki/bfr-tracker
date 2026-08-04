@@ -96,7 +96,7 @@
   }
   form.addform .field{display:flex;flex-direction:column;gap:4px;}
   form.addform label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);}
-  form.addform input{
+  form.addform input, form.addform select{
     font-family:inherit;
     font-size:14px;
     padding:8px;
@@ -104,7 +104,7 @@
     background:#fff;
     color:var(--ink);
   }
-  form.addform input:focus{outline:2px solid var(--ink);outline-offset:1px;}
+  form.addform input:focus, form.addform select:focus{outline:2px solid var(--ink);outline-offset:1px;}
   .btn{
     font-family:'Arial Black',Arial,sans-serif;
     font-size:12px;
@@ -316,11 +316,18 @@
     <form class="addform" id="addForm">
       <div class="field">
         <label for="bfrNum">BFR Number</label>
-        <input id="bfrNum" type="text" placeholder="e.g. BFR-0231" required>
+        <input id="bfrNum" type="text" placeholder="e.g. 0231" required>
       </div>
       <div class="field">
-        <label for="bfrLoc">Location / Unit</label>
-        <input id="bfrLoc" type="text" placeholder="e.g. Blk 5 #12-34, ACMV">
+        <label for="bfrDept">Department</label>
+        <select id="bfrDept">
+          <option value="">— Select —</option>
+          <option value="ACMV">ACMV</option>
+          <option value="BUILDING">BUILDING</option>
+          <option value="MECHANICAL">MECHANICAL</option>
+          <option value="ELECTRICAL">ELECTRICAL</option>
+          <option value="OTIS">OTIS</option>
+        </select>
       </div>
       <div class="field">
         <label for="bfrDate">Date Scanned Out</label>
@@ -330,7 +337,7 @@
     </form>
 
     <div class="searchrow">
-      <input type="text" id="search" placeholder="Search BFR number or location…">
+      <input type="text" id="search" placeholder="Search BFR number or department…">
       <button class="btn secondary" id="clearSearch">Clear</button>
     </div>
 
@@ -371,6 +378,9 @@ function showToast(msg){
 function uid(){
   return 'r'+Date.now()+Math.random().toString(36).slice(2,7);
 }
+function stripBfrPrefix(s){
+  return (s||'').replace(/^BFR[\s\-#]*/i,'').trim() || (s||'');
+}
 
 async function loadRecords(){
   try{
@@ -392,7 +402,7 @@ function render(){
   const q = document.getElementById('search').value.trim().toLowerCase();
   const filtered = records.filter(r=>{
     if(!q) return true;
-    return (r.bfrNumber||'').toLowerCase().includes(q) || (r.location||'').toLowerCase().includes(q);
+    return (r.bfrNumber||'').toLowerCase().includes(q) || (r.department||'').toLowerCase().includes(q);
   });
 
   const outItems = filtered.filter(r=>!r.scannedInDate).sort((a,b)=> (b.scannedOutDate||'').localeCompare(a.scannedOutDate||''));
@@ -410,8 +420,8 @@ function render(){
   outList.innerHTML = outItems.length ? outItems.map(r=>`
     <div class="ticket">
       <div class="stampmark">PENDING</div>
-      <div class="num">${escapeHtml(r.bfrNumber)}</div>
-      <div class="loc">${escapeHtml(r.location||'No location noted')}</div>
+      <div class="num">${escapeHtml(stripBfrPrefix(r.bfrNumber))}</div>
+      <div class="loc">${escapeHtml(r.department||'No department noted')}</div>
       <div class="dates">Scanned out: ${fmtDate(r.scannedOutDate)}</div>
       <div class="actions">
         <button class="btn green" data-action="return" data-id="${r.id}">Mark Returned</button>
@@ -423,8 +433,8 @@ function render(){
   inList.innerHTML = inItems.length ? inItems.map(r=>`
     <div class="ticket">
       <div class="stampmark">COMPLETE</div>
-      <div class="num">${escapeHtml(r.bfrNumber)}</div>
-      <div class="loc">${escapeHtml(r.location||'No location noted')}</div>
+      <div class="num">${escapeHtml(stripBfrPrefix(r.bfrNumber))}</div>
+      <div class="loc">${escapeHtml(r.department||'No department noted')}</div>
       <div class="dates">
         Out: ${fmtDate(r.scannedOutDate)}<br>
         In: ${fmtDate(r.scannedInDate)}
@@ -444,13 +454,13 @@ function escapeHtml(s){
 document.getElementById('addForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const num = document.getElementById('bfrNum').value.trim();
-  const loc = document.getElementById('bfrLoc').value.trim();
+  const dept = document.getElementById('bfrDept').value;
   const date = document.getElementById('bfrDate').value || todayStr();
   if(!num) return;
-  records.push({id:uid(), bfrNumber:num, location:loc, scannedOutDate:date, scannedInDate:null});
+  records.push({id:uid(), bfrNumber:num, department:dept, scannedOutDate:date, scannedInDate:null});
   await saveRecords();
   document.getElementById('bfrNum').value='';
-  document.getElementById('bfrLoc').value='';
+  document.getElementById('bfrDept').value='';
   document.getElementById('bfrDate').value = todayStr();
   render();
   showToast('Logged to Out Tray');
@@ -521,6 +531,8 @@ fileInput.addEventListener('change', (e)=>{
   fileInput.value = '';
 });
 
+const DEPARTMENTS = ['ACMV','BUILDING','MECHANICAL','ELECTRICAL','OTIS'];
+
 function extractBfrNumber(text){
   const patterns = [
     /BFR[\s#\-\/:]*([A-Z0-9][A-Z0-9\-\/]{2,14})/i,
@@ -528,13 +540,16 @@ function extractBfrNumber(text){
   ];
   for(const p of patterns){
     const m = text.match(p);
-    if(m && m[1]) return ('BFR-'+m[1].replace(/^BFR[-\s]?/i,'')).replace(/^BFR-BFR-/i,'BFR-');
+    if(m && m[1]) return m[1].replace(/^BFR[-\s]?/i,'').trim();
   }
   return '';
 }
-function extractLocation(text){
-  const m = text.match(/(?:Location|Unit|Block|Blk)\s*[:\-]?\s*([A-Za-z0-9#,\.\- ]{4,40})/i);
-  return m ? m[1].trim() : '';
+function extractDepartment(text){
+  const upper = text.toUpperCase();
+  for(const d of DEPARTMENTS){
+    if(upper.includes(d)) return d;
+  }
+  return '';
 }
 
 async function ocrImageSource(imgSource){
@@ -599,11 +614,11 @@ async function handleFiles(files){
 
       texts.forEach((text, idx)=>{
         const bfr = extractBfrNumber(text);
-        const loc = extractLocation(text);
+        const dept = extractDepartment(text);
         reviewItems.push({
           source: file.name + (texts.length>1 ? ' (page '+(idx+1)+')' : ''),
           bfrNumber: bfr,
-          location: loc,
+          department: dept,
           snippet: text.replace(/\s+/g,' ').trim().slice(0,140)
         });
       });
@@ -629,7 +644,10 @@ function renderReview(){
     return `
     <div class="reviewrow ${matchClass}" data-idx="${i}">
       <input type="text" class="rv-bfr" value="${escapeHtml(it.bfrNumber)}" placeholder="BFR number">
-      <input type="text" class="rv-loc" value="${escapeHtml(it.location)}" placeholder="Location (optional)">
+      <select class="rv-dept">
+        <option value="">— Select —</option>
+        ${DEPARTMENTS.map(d=>`<option value="${d}" ${it.department===d?'selected':''}>${d}</option>`).join('')}
+      </select>
       <div style="font-size:10px;color:var(--ink-soft);">${escapeHtml(it.source)}${matchNote?'<br>'+matchNote:''}</div>
       <button class="btn secondary rv-remove" data-idx="${i}" style="padding:6px 10px;font-size:10px;">Remove</button>
       <div class="snippet">OCR read: "${escapeHtml(it.snippet)}…"</div>
@@ -638,7 +656,7 @@ function renderReview(){
   document.getElementById('reviewActions').style.display = 'flex';
 
   box.querySelectorAll('.rv-bfr').forEach((inp,i)=>inp.addEventListener('input',()=>{reviewItems[i].bfrNumber=inp.value; renderReview();}));
-  box.querySelectorAll('.rv-loc').forEach((inp,i)=>inp.addEventListener('input',()=>{reviewItems[i].location=inp.value;}));
+  box.querySelectorAll('.rv-dept').forEach((sel,i)=>sel.addEventListener('change',()=>{reviewItems[i].department=sel.value;}));
   box.querySelectorAll('.rv-remove').forEach(btn=>btn.addEventListener('click',()=>{
     reviewItems.splice(parseInt(btn.dataset.idx),1);
     renderReview();
@@ -657,7 +675,7 @@ document.getElementById('confirmScan').addEventListener('click', async ()=>{
   for(const it of reviewItems){
     if(!it.bfrNumber) continue;
     if(scanMode === 'out'){
-      records.push({id:uid(), bfrNumber:it.bfrNumber, location:it.location, scannedOutDate:todayStr(), scannedInDate:null});
+      records.push({id:uid(), bfrNumber:it.bfrNumber, department:it.department, scannedOutDate:todayStr(), scannedInDate:null});
       added++;
     } else {
       const existing = records.find(r=>!r.scannedInDate && r.bfrNumber.toLowerCase()===it.bfrNumber.toLowerCase());
@@ -665,7 +683,7 @@ document.getElementById('confirmScan').addEventListener('click', async ()=>{
         existing.scannedInDate = todayStr();
         matched++;
       } else {
-        records.push({id:uid(), bfrNumber:it.bfrNumber, location:it.location, scannedOutDate:null, scannedInDate:todayStr()});
+        records.push({id:uid(), bfrNumber:it.bfrNumber, department:it.department, scannedOutDate:null, scannedInDate:todayStr()});
         added++;
       }
     }
