@@ -545,7 +545,13 @@ function extractBfrNumber(text){
   return '';
 }
 function extractDepartment(text){
-  const upper = text.toUpperCase();
+  // Anchor to the "Maintenance Group" field specifically — this is the trade
+  // group that does the repair. It's a different field from "Department"
+  // near the top of the form, which is the requestor's own office and can
+  // hold a completely different value (e.g. "Judge MJ", "Human Resource").
+  const idx = text.search(/Maintenance\s*Group/i);
+  const scope = idx !== -1 ? text.slice(idx, idx + 60) : text;
+  const upper = scope.toUpperCase();
   for(const d of DEPARTMENTS){
     if(upper.includes(d)) return d;
   }
