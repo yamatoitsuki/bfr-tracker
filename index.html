@@ -31,7 +31,7 @@
     min-height:100vh;
     padding:24px 16px 60px;
   }
-  .wrap{max-width:980px;margin:0 auto;}
+  .wrap{max-width:760px;margin:0 auto;}
 
   header{
     display:flex;
@@ -72,8 +72,8 @@
 
   .stats{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:12px;
+    grid-template-columns:1fr;
+    max-width:240px;
     margin-bottom:24px;
   }
   .stat{
@@ -82,10 +82,8 @@
     padding:12px 14px;
     text-align:center;
   }
-  .stat .n{font-family:'Arial Black',Arial,sans-serif;font-size:26px;}
+  .stat .n{font-family:'Arial Black',Arial,sans-serif;font-size:26px;color:var(--stamp-green);}
   .stat .l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-soft);margin-top:2px;}
-  .stat.out .n{color:var(--stamp-red);}
-  .stat.in .n{color:var(--stamp-green);}
 
   form.addform{
     background:var(--paper);
@@ -125,79 +123,130 @@
   .btn.secondary:hover{background:var(--ink);color:var(--paper);}
   .btn.green:hover{background:var(--stamp-green);border-color:var(--stamp-green);}
 
-  .searchrow{margin-bottom:18px;display:flex;gap:10px;}
+  .searchrow{margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;}
   .searchrow input{
     flex:1;
+    min-width:180px;
     font-family:inherit;
     padding:9px 12px;
     border:1px solid var(--line);
     background:#fff;
     font-size:13px;
   }
-
-  .trays{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
-  @media(max-width:1000px){.trays{grid-template-columns:1fr;}}
-  @media(max-width:760px){form.addform{grid-template-columns:1fr;}}
-
-  .tray h2{
-    font-family:'Arial Black',Arial,sans-serif;
-    font-size:14px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    padding-bottom:8px;
-    border-bottom:2px solid var(--ink);
-    margin-bottom:10px;
-    display:flex;
-    justify-content:space-between;
-  }
-  .tray.out h2{color:var(--stamp-red);border-color:var(--stamp-red);}
-  .tray.in h2{color:var(--stamp-green);border-color:var(--stamp-green);}
-  .tray.archived h2{color:var(--ink-soft);border-color:var(--ink-soft);}
-
-  .trayfilter{
-    width:100%;
+  .searchrow select{
     font-family:inherit;
-    font-size:11px;
-    letter-spacing:0.5px;
-    padding:6px 8px;
-    margin-bottom:14px;
+    font-size:13px;
+    padding:9px 10px;
     border:1px solid var(--line);
     background:#fff;
     color:var(--ink);
   }
 
-  .ticket{
+  @media(max-width:760px){form.addform{grid-template-columns:1fr;}}
+
+  .listhead{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:14px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--stamp-green);
+    color:var(--stamp-green);
+    margin:0 0 12px;
+    display:flex;
+    justify-content:space-between;
+  }
+
+  .gappanel{
+    background:var(--paper);
+    border:2px solid var(--stamp-red);
+    padding:14px 16px;
+    margin-bottom:22px;
+  }
+  .gappanel.clear{border-color:var(--stamp-green);}
+  .gappanel .gaphead{
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:8px;margin-bottom:10px;
+  }
+  .gappanel h2{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:14px;letter-spacing:2px;text-transform:uppercase;
+    margin:0;color:var(--stamp-red);
+  }
+  .gappanel.clear h2{color:var(--stamp-green);}
+  .gappanel .gapfrom{font-size:11px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
+  .gappanel .gapfrom input{
+    width:90px;font-family:inherit;font-size:12px;padding:5px 6px;
+    border:1px solid var(--line);background:#fff;
+  }
+  .gappanel .gapsummary{font-size:12px;color:var(--ink-soft);margin-bottom:10px;}
+  .gapchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;}
+  .gapitem{background:#fff;border:1px solid var(--stamp-red);padding:6px 10px;display:flex;gap:8px;align-items:baseline;}
+  .gapnum{font-family:'Arial Black',Arial,sans-serif;font-size:14px;letter-spacing:0.5px;color:var(--stamp-red);}
+  .gapbody{margin-top:12px;}
+  .gapbody .gapfrom{margin-bottom:10px;}
+  .listpanel{margin-bottom:8px;}
+
+  details.gappanel > summary, details.listpanel > summary{
+    list-style:none;cursor:pointer;
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:14px;letter-spacing:2px;text-transform:uppercase;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  details > summary::-webkit-details-marker{display:none;}
+  details > summary::after{
+    content:'Show \25BE';
+    font-family:'Courier New',monospace;font-size:11px;letter-spacing:1px;font-weight:bold;
+    border:2px solid currentColor;padding:4px 10px;flex-shrink:0;margin-left:10px;
+  }
+  details[open] > summary::after{content:'Hide \25B4';}
+  details > summary:hover::after{opacity:0.65;}
+  details.gappanel > summary{color:var(--stamp-red);}
+  details.gappanel.clear > summary{color:var(--stamp-green);}
+  details.listpanel > summary{
+    color:var(--stamp-green);
+    padding-bottom:8px;border-bottom:2px solid var(--stamp-green);margin-bottom:12px;
+  }
+  .gapchip{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:12px;letter-spacing:0.5px;
+    background:#fff;color:var(--stamp-red);
+    border:1px solid var(--stamp-red);
+    padding:4px 8px;
+  }
+  .gapchip small{font-family:'Courier New',monospace;font-size:10px;color:var(--ink-soft);margin-left:4px;}
+
+  .rangemissing{display:none;margin:-8px 0 18px;font-size:12px;line-height:1.7;color:var(--stamp-red);}
+  .rangemissing.show{display:block;}
+  .rangemissing.ok{color:var(--stamp-green);}
+  .rangemissing b{font-family:'Arial Black',Arial,sans-serif;letter-spacing:0.5px;}
+  .gapdept{font-family:'Courier New',monospace;font-size:11px;font-weight:normal;color:var(--ink-soft);margin-left:3px;}
+  .gapjumps{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:11px;color:var(--ink-soft);line-height:1.6;}
+  .gapjumps b{color:var(--ink);}
+
+  .entry{
     background:var(--paper);
     border:1px solid var(--line);
-    border-left:6px solid var(--stamp-red);
+    border-left:6px solid var(--stamp-green);
     padding:12px 14px;
-    margin-bottom:10px;
-    position:relative;
+    margin-bottom:8px;
+    display:grid;
+    grid-template-columns:110px 1fr auto auto;
+    gap:12px;
+    align-items:center;
   }
-  .tray.in .ticket{border-left-color:var(--stamp-green);}
-  .tray.archived .ticket{border-left-color:var(--ink-soft);}
-  .ticket .num{
+  .entry .num{
     font-family:'Arial Black',Arial,sans-serif;
     font-size:16px;
     letter-spacing:1px;
   }
-  .ticket .loc{font-size:12px;color:var(--ink-soft);margin-top:2px;}
-  .ticket .dates{font-size:11px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
-  .ticket .actions{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;}
-  .ticket .actions .btn{padding:6px 9px;font-size:10px;}
-  .stampmark{
-    position:absolute;top:10px;right:12px;
-    font-family:'Arial Black',Arial,sans-serif;
-    font-size:10px;
-    letter-spacing:2px;
-    border:2px solid var(--stamp-red);
-    color:var(--stamp-red);
-    padding:2px 6px;
-    transform:rotate(-6deg);
-    opacity:0.75;
+  .entry .dept{font-size:12px;color:var(--ink-soft);}
+  .entry .when{font-size:11px;color:var(--ink-soft);}
+  .entry .btn{padding:6px 9px;font-size:10px;}
+  @media(max-width:600px){
+    .entry{grid-template-columns:1fr auto;}
+    .entry .dept,.entry .when{grid-column:1;}
   }
-  .tray.in .stampmark{border-color:var(--stamp-green);color:var(--stamp-green);}
-  .tray.archived .stampmark{border-color:var(--ink-soft);color:var(--ink-soft);}
 
   .empty{
     font-size:12px;
@@ -227,17 +276,6 @@
     font-size:14px;letter-spacing:2px;text-transform:uppercase;
     margin:0 0 12px;
   }
-  .modetoggle{display:flex;gap:0;margin-bottom:14px;border:1px solid var(--ink);width:fit-content;}
-  .modetoggle button{
-    font-family:'Arial Black',Arial,sans-serif;
-    font-size:11px;letter-spacing:1px;text-transform:uppercase;
-    padding:8px 16px;
-    border:none;background:transparent;color:var(--ink);
-    cursor:pointer;
-  }
-  .modetoggle button.active.out{background:var(--stamp-red);color:#fff;}
-  .modetoggle button.active.in{background:var(--stamp-green);color:#fff;}
-  .modetoggle button:not(.active){border-right:1px solid var(--ink);}
 
   .dropzone{
     border:2px dashed var(--ink-soft);
@@ -273,8 +311,7 @@
     margin-bottom:8px;
     font-size:12px;
   }
-  .reviewrow.nomatch{border-left:4px solid var(--stamp-red);}
-  .reviewrow.matched{border-left:4px solid var(--stamp-green);}
+  .reviewrow.dupe{border-left:4px solid var(--stamp-red);}
   .reviewrow input{
     font-family:inherit;font-size:12px;padding:6px;border:1px solid var(--line);width:100%;
   }
@@ -286,24 +323,6 @@
     display:flex;
     align-items:center;
     gap:10px;
-  }
-  .adminbadge{
-    font-family:'Arial Black',Arial,sans-serif;
-    font-size:10px;
-    letter-spacing:1.5px;
-    text-transform:uppercase;
-    color:var(--stamp-green);
-    border:1px solid var(--stamp-green);
-    padding:4px 8px;
-  }
-  .viewerbadge{
-    font-family:'Arial Black',Arial,sans-serif;
-    font-size:10px;
-    letter-spacing:1.5px;
-    text-transform:uppercase;
-    color:var(--ink-soft);
-    border:1px solid var(--ink-soft);
-    padding:4px 8px;
   }
   .authbtn{
     font-family:'Arial Black',Arial,sans-serif;
@@ -318,11 +337,19 @@
   }
   .authbtn:hover{background:var(--ink);color:var(--paper);}
 
+  .adminbadge,.viewerbadge{
+    font-family:'Arial Black',Arial,sans-serif;
+    font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+    padding:4px 8px;
+  }
+  .adminbadge{color:var(--stamp-green);border:1px solid var(--stamp-green);}
+  .viewerbadge{color:var(--ink-soft);border:1px solid var(--ink-soft);}
+
   .loginpanel{
     background:var(--paper);
     border:2px solid var(--ink);
     padding:16px;
-    margin-bottom:22px;
+    margin:0 auto 22px;
     display:none;
     max-width:320px;
   }
@@ -341,18 +368,8 @@
     margin-bottom:8px;
     box-sizing:border-box;
   }
-  .loginpanel .row{display:flex;gap:8px;}
-  .loginpanel .err{font-size:11px;color:var(--stamp-red);margin-top:-4px;margin-bottom:8px;display:none;}
+  .loginpanel .err{font-size:11px;color:var(--stamp-red);margin-bottom:8px;display:none;}
   .loginpanel .err.show{display:block;}
-
-  .viewernote{
-    font-size:12px;
-    color:var(--ink-soft);
-    border:1px dashed var(--line);
-    padding:10px 14px;
-    margin-bottom:20px;
-    background:var(--paper);
-  }
 </style>
 </head>
 <body>
@@ -360,12 +377,11 @@
   <header>
     <div class="title-block">
       <h1>BFR Tray Tracker</h1>
-      <div class="sub">Handover Log</div>
+      <div class="sub">Scan Log</div>
     </div>
     <div class="authbar">
       <div class="datestamp">
         <div class="big" id="todayLabel">—</div>
-        <div>BFR Log</div>
       </div>
       <span id="authBadge"></span>
       <button class="authbtn" id="authToggleBtn">Admin Login</button>
@@ -373,126 +389,93 @@
   </header>
 
   <div class="loginpanel" id="loginPanel">
-    <h3>Admin Login</h3>
+    <h3>Admin login</h3>
     <div class="err" id="loginErr">Incorrect password. Try again.</div>
     <input type="password" id="loginPassword" placeholder="Enter admin password">
-    <div class="row">
+    <div style="display:flex;gap:8px;">
       <button class="btn" id="loginSubmit" style="flex:1;">Unlock</button>
       <button class="btn secondary" id="loginCancel">Cancel</button>
     </div>
-  </div>
-
-  <div id="viewerNote" class="viewernote" style="display:none;">
-    You're viewing in read-only mode. You can see BFR status and search the log, but logging, scanning, and marking returns requires admin login.
   </div>
 
   <div id="loading" class="loading">Loading log…</div>
 
   <div id="app" style="display:none;">
     <div class="stats">
-      <div class="stat out">
-        <div class="n" id="statOut">0</div>
-        <div class="l">Out with Techs</div>
-      </div>
-      <div class="stat in">
-        <div class="n" id="statIn">0</div>
-        <div class="l">In Tray, Ready</div>
-      </div>
       <div class="stat">
         <div class="n" id="statTotal">0</div>
-        <div class="l">Total Logged</div>
+        <div class="l">BFRs Scanned</div>
       </div>
     </div>
 
     <div id="adminControls" style="display:none;">
-      <div class="scanbox">
-        <h2>Bulk Scan &amp; Auto-Extract</h2>
-        <div class="modetoggle">
-          <button type="button" id="modeOutBtn" class="active out">Scanning Out</button>
-          <button type="button" id="modeInBtn" class="in">Scanning In (Returns)</button>
-        </div>
-        <div class="dropzone" id="dropzone">
-          <div id="dropzoneLabel">Drop BFR images or PDFs here, or click to choose files<br><span style="font-size:10px;">Accepts multiple files at once — JPG, PNG, PDF</span></div>
-          <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
-        </div>
-        <div class="scanprogress" id="scanProgress"></div>
-        <div class="reviewtable" id="reviewTable"></div>
-        <div class="reviewactions" id="reviewActions" style="display:none;">
-          <button class="btn secondary" id="discardScan">Discard</button>
-          <button class="btn green" id="confirmScan">Confirm &amp; Apply to Log</button>
-        </div>
+    <div class="scanbox">
+      <h2>Bulk Scan &amp; Auto-Extract</h2>
+      <div class="dropzone" id="dropzone">
+        <div id="dropzoneLabel">Drop BFR images or PDFs here, or click to choose files<br><span style="font-size:10px;">Accepts multiple files at once — JPG, PNG, PDF</span></div>
+        <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
       </div>
+      <div class="scanprogress" id="scanProgress"></div>
+      <div class="reviewtable" id="reviewTable"></div>
+      <div class="reviewactions" id="reviewActions" style="display:none;">
+        <button class="btn secondary" id="discardScan">Discard</button>
+        <button class="btn green" id="confirmScan">Confirm &amp; Add to Log</button>
+      </div>
+    </div>
 
-      <form class="addform" id="addForm">
-        <div class="field">
-          <label for="bfrNum">BFR Number</label>
-          <input id="bfrNum" type="text" placeholder="e.g. 0231" required>
-        </div>
-        <div class="field">
-          <label for="bfrDept">Department</label>
-          <select id="bfrDept">
-            <option value="">— Select —</option>
-            <option value="ACMV">ACMV</option>
-            <option value="BUILDING">BUILDING</option>
-            <option value="MECHANICAL">MECHANICAL</option>
-            <option value="ELECTRICAL">ELECTRICAL</option>
-            <option value="OTIS">OTIS</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="bfrDate">Date Scanned Out</label>
-          <input id="bfrDate" type="date" required>
-        </div>
-        <button type="submit" class="btn">+ Log Out to Tray</button>
-      </form>
+    <form class="addform" id="addForm">
+      <div class="field">
+        <label for="bfrNum">BFR Number</label>
+        <input id="bfrNum" type="text" placeholder="e.g. 0231" required>
+      </div>
+      <div class="field">
+        <label for="bfrDept">Department</label>
+        <select id="bfrDept">
+          <option value="">— Select —</option>
+          <option value="ACMV">ACMV</option>
+          <option value="BUILDING">BUILDING</option>
+          <option value="MECHANICAL">MECHANICAL</option>
+          <option value="ELECTRICAL">ELECTRICAL</option>
+          <option value="OTIS">OTIS</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="bfrDate">Date Scanned</label>
+        <input id="bfrDate" type="date" required>
+      </div>
+      <button type="submit" class="btn">+ Log BFR</button>
+    </form>
     </div>
 
     <div class="searchrow">
-      <input type="text" id="search" placeholder="Search BFR number or department…">
+      <input type="text" id="search" placeholder="Search BFR number, department, or range e.g. 4556-4652">
+      <select id="deptFilter">
+        <option value="ALL">All departments</option>
+        <option value="ACMV">ACMV</option>
+        <option value="BUILDING">BUILDING</option>
+        <option value="MECHANICAL">MECHANICAL</option>
+        <option value="ELECTRICAL">ELECTRICAL</option>
+        <option value="OTIS">OTIS</option>
+      </select>
       <button class="btn secondary" id="clearSearch">Clear</button>
     </div>
+    <div class="rangemissing" id="rangeMissing"></div>
 
-    <div class="trays">
-      <div class="tray out">
-        <h2>Out Tray <span id="outCount">0</span></h2>
-        <select class="trayfilter" id="filterOut">
-          <option value="ALL">Filter: ALL</option>
-          <option value="NONE">Filter: NONE</option>
-          <option value="ACMV">ACMV</option>
-          <option value="BUILDING">BUILDING</option>
-          <option value="MECHANICAL">MECHANICAL</option>
-          <option value="ELECTRICAL">ELECTRICAL</option>
-          <option value="OTIS">OTIS</option>
-        </select>
-        <div id="outList"></div>
+    <details class="gappanel" id="gapPanel">
+      <summary><span id="gapTitle">Missing BFRs (0)</span></summary>
+      <div class="gapbody">
+        <label class="gapfrom">Check from BFR
+          <input type="text" id="gapFrom" inputmode="numeric" placeholder="lowest">
+        </label>
+        <div class="gapsummary" id="gapSummary"></div>
+        <div class="gapchips" id="gapChips"></div>
       </div>
-      <div class="tray in">
-        <h2>In Tray <span id="inCount">0</span></h2>
-        <select class="trayfilter" id="filterIn">
-          <option value="ALL">Filter: ALL</option>
-          <option value="NONE">Filter: NONE</option>
-          <option value="ACMV">ACMV</option>
-          <option value="BUILDING">BUILDING</option>
-          <option value="MECHANICAL">MECHANICAL</option>
-          <option value="ELECTRICAL">ELECTRICAL</option>
-          <option value="OTIS">OTIS</option>
-        </select>
-        <div id="inList"></div>
-      </div>
-      <div class="tray archived">
-        <h2>Archived <span id="archivedCount">0</span></h2>
-        <select class="trayfilter" id="filterArchived">
-          <option value="ALL">Filter: ALL</option>
-          <option value="NONE">Filter: NONE</option>
-          <option value="ACMV">ACMV</option>
-          <option value="BUILDING">BUILDING</option>
-          <option value="MECHANICAL">MECHANICAL</option>
-          <option value="ELECTRICAL">ELECTRICAL</option>
-          <option value="OTIS">OTIS</option>
-        </select>
-        <div id="archivedList"></div>
-      </div>
-    </div>
+    </details>
+
+    <details class="listpanel">
+      <summary>Scanned BFRs <span id="listCount">(0/0)</span></summary>
+      <div id="bfrList"></div>
+    </details>
   </div>
 </div>
 
@@ -500,7 +483,6 @@
 
 <script>
 // ---------- Firebase Config ----------
-// Fill these in from your Firebase project settings (see setup guide provided separately).
 const firebaseConfig = {
   apiKey: "AIzaSyDL9fPfm9ZcWFzUZAhzRe75UC7Kv2lr2uU",
   authDomain: "bfr-tracker.firebaseapp.com",
@@ -509,7 +491,7 @@ const firebaseConfig = {
   messagingSenderId: "291923466374",
   appId: "1:291923466374:web:68ba62def5f988afa4d907"
 };
-const ADMIN_EMAIL = "admin@bfrtracker.local"; // fixed email paired with the one Firebase Auth user you create
+const ADMIN_EMAIL = "admin@bfrtracker.local";
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -517,6 +499,8 @@ const db = firebase.firestore();
 const recordsDocRef = db.collection('bfrtracker').doc('records');
 
 let records = [];
+let isAdmin = false;
+let unsubscribeRecords = null;
 
 function todayStr(){
   const d = new Date();
@@ -539,11 +523,19 @@ function uid(){
 function stripBfrPrefix(s){
   return (s||'').replace(/^BFR[\s\-#]*/i,'').trim() || (s||'');
 }
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+// Existing records keep their original fields. The date shown is whichever
+// scan date the record has (out-scan date first, then in-scan date).
+function scanDateOf(r){
+  return r.scannedOutDate || r.scannedInDate || '';
+}
 
-// Live sync: any device viewing the page gets updates the moment Firestore changes.
+// Live sync — anyone can read; only a logged-in admin can write.
 function subscribeToRecords(onFirstLoad){
   let firstLoadDone = false;
-  recordsDocRef.onSnapshot((snap)=>{
+  return recordsDocRef.onSnapshot((snap)=>{
     const data = snap.exists ? snap.data() : null;
     records = (data && Array.isArray(data.data)) ? data.data : [];
     if(!firstLoadDone){
@@ -566,97 +558,184 @@ async function saveRecords(){
     await recordsDocRef.set({ data: records });
   }catch(e){
     console.error(e);
-    showToast('Save failed — check connection or admin login');
+    showToast('Save failed — check connection or login');
   }
 }
 
-
-let trayFilters = { out: 'ALL', in: 'ALL', archived: 'ALL' };
-
-function matchesFilter(r, filterVal){
-  if(filterVal === 'NONE') return false;
-  if(filterVal === 'ALL') return true;
-  return (r.department||'').toUpperCase() === filterVal;
+// ---------- Range search (e.g. 4556-4652) ----------
+function recNum(r){
+  const t = stripBfrPrefix(r.bfrNumber||'').trim();
+  return /^\d+$/.test(t) ? parseInt(t,10) : null;
+}
+function parseRange(q){
+  const m = (q||'').match(/^\s*(\d+)\s*(?:-|–|—|to)\s*(\d+)\s*$/i);
+  if(!m) return null;
+  let lo = parseInt(m[1],10), hi = parseInt(m[2],10);
+  if(lo > hi) [lo,hi] = [hi,lo];
+  return {lo, hi};
+}
+// Missing numbers inside [lo,hi], returned as runs of consecutive numbers.
+function missingInRange(lo, hi){
+  const have = new Set();
+  records.forEach(r=>{ const n = recNum(r); if(n !== null) have.add(n); });
+  const runs = [];
+  let count = 0;
+  for(let n=lo; n<=hi; n++){
+    if(have.has(n)) continue;
+    count++;
+    const last = runs[runs.length-1];
+    if(last && last.end === n-1) last.end = n; else runs.push({start:n, end:n});
+  }
+  return {runs, count};
+}
+function renderRangeMissing(range){
+  const box = document.getElementById('rangeMissing');
+  if(!range){ box.className = 'rangemissing'; box.innerHTML = ''; return; }
+  const label = `${range.lo}–${range.hi}`;
+  if(range.hi - range.lo > 20000){
+    box.className = 'rangemissing show';
+    box.textContent = 'Range too large. Use a smaller range.';
+    return;
+  }
+  const {runs, count} = missingInRange(range.lo, range.hi);
+  if(!count){
+    box.className = 'rangemissing show ok';
+    box.textContent = `No missing numbers in ${label}.`;
+    return;
+  }
+  const CAP = 100;
+  const text = runs.slice(0, CAP).map(r=> r.start === r.end ? `${r.start}` : `${r.start}–${r.end}`).join(', ');
+  const more = runs.length > CAP ? `, and ${runs.length - CAP} more` : '';
+  box.className = 'rangemissing show';
+  box.innerHTML = `<b>Missing in ${label} (${count}):</b> ${text}${more}`;
 }
 
 function render(){
   const q = document.getElementById('search').value.trim().toLowerCase();
-  const filtered = records.filter(r=>{
-    if(!q) return true;
-    return (r.bfrNumber||'').toLowerCase().includes(q) || (r.department||'').toLowerCase().includes(q);
-  });
+  const range = parseRange(q);
+  const dept = document.getElementById('deptFilter').value;
 
-  const outAll = filtered.filter(r=>!r.scannedInDate && !r.archived);
-  const inAll = filtered.filter(r=>r.scannedInDate && !r.archived);
-  const archivedAll = filtered.filter(r=>r.archived);
+  const items = records
+    .map((r,i)=>({r,i}))
+    .filter(({r})=>{
+      if(dept !== 'ALL' && (r.department||'').toUpperCase() !== dept) return false;
+      if(!q) return true;
+      if(range){
+        const n = recNum(r);
+        return n !== null && n >= range.lo && n <= range.hi;
+      }
+      return (r.bfrNumber||'').toLowerCase().includes(q) || (r.department||'').toLowerCase().includes(q);
+    })
+    .sort((a,b)=>{
+      if(range) return (recNum(a.r)||0) - (recNum(b.r)||0);
+      const c = scanDateOf(b.r).localeCompare(scanDateOf(a.r));
+      return c !== 0 ? c : b.i - a.i;
+    })
+    .map(x=>x.r);
 
-  const outItems = outAll.filter(r=>matchesFilter(r, trayFilters.out)).sort((a,b)=> (b.scannedOutDate||'').localeCompare(a.scannedOutDate||''));
-  const inItems = inAll.filter(r=>matchesFilter(r, trayFilters.in)).sort((a,b)=> (b.scannedInDate||'').localeCompare(a.scannedInDate||''));
-  const archivedItems = archivedAll.filter(r=>matchesFilter(r, trayFilters.archived)).sort((a,b)=> (b.scannedInDate||'').localeCompare(a.scannedInDate||''));
-
-  document.getElementById('outCount').textContent = '('+outItems.length+'/'+outAll.length+')';
-  document.getElementById('inCount').textContent = '('+inItems.length+'/'+inAll.length+')';
-  document.getElementById('archivedCount').textContent = '('+archivedItems.length+'/'+archivedAll.length+')';
-  document.getElementById('statOut').textContent = records.filter(r=>!r.scannedInDate && !r.archived).length;
-  document.getElementById('statIn').textContent = records.filter(r=>r.scannedInDate && !r.archived).length;
+  document.getElementById('listCount').textContent = '('+items.length+'/'+records.length+')';
   document.getElementById('statTotal').textContent = records.length;
+  renderGaps();
+  renderRangeMissing(range);
 
-  const outList = document.getElementById('outList');
-  const inList = document.getElementById('inList');
-  const archivedList = document.getElementById('archivedList');
-
-  outList.innerHTML = outItems.length ? outItems.map(r=>`
-    <div class="ticket">
-      <div class="stampmark">PENDING</div>
+  document.getElementById('bfrList').innerHTML = items.length ? items.map(r=>`
+    <div class="entry">
       <div class="num">${escapeHtml(stripBfrPrefix(r.bfrNumber))}</div>
-      <div class="loc">${escapeHtml(r.department||'No department noted')}</div>
-      <div class="dates">Scanned out: ${fmtDate(r.scannedOutDate)}</div>
-      ${isAdmin ? `
-      <div class="actions">
-        <button class="btn green" data-action="return" data-id="${r.id}">Mark Returned</button>
-        <button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>
-      </div>` : ''}
+      <div class="dept">${escapeHtml(r.department||'No department noted')}</div>
+      <div class="when">Scanned: ${fmtDate(scanDateOf(r))}</div>
+      ${isAdmin ? `<button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>` : ''}
     </div>
-  `).join('') : `<div class="empty">${outAll.length ? 'No BFRs match this filter.' : 'No BFRs currently out. Log one above once scanned.'}</div>`;
-
-  inList.innerHTML = inItems.length ? inItems.map(r=>`
-    <div class="ticket">
-      <div class="stampmark">COMPLETE</div>
-      <div class="num">${escapeHtml(stripBfrPrefix(r.bfrNumber))}</div>
-      <div class="loc">${escapeHtml(r.department||'No department noted')}</div>
-      <div class="dates">
-        Out: ${fmtDate(r.scannedOutDate)}<br>
-        In: ${fmtDate(r.scannedInDate)}
-      </div>
-      ${isAdmin ? `
-      <div class="actions">
-        <button class="btn secondary" data-action="reopen" data-id="${r.id}">Reopen</button>
-        <button class="btn secondary" data-action="archive" data-id="${r.id}">Archive</button>
-        <button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>
-      </div>` : ''}
-    </div>
-  `).join('') : `<div class="empty">${inAll.length ? 'No BFRs match this filter.' : 'Nothing marked returned yet.'}</div>`;
-
-  archivedList.innerHTML = archivedItems.length ? archivedItems.map(r=>`
-    <div class="ticket">
-      <div class="stampmark">ARCHIVED</div>
-      <div class="num">${escapeHtml(stripBfrPrefix(r.bfrNumber))}</div>
-      <div class="loc">${escapeHtml(r.department||'No department noted')}</div>
-      <div class="dates">
-        Out: ${fmtDate(r.scannedOutDate)}<br>
-        In: ${fmtDate(r.scannedInDate)}
-      </div>
-      ${isAdmin ? `
-      <div class="actions">
-        <button class="btn secondary" data-action="unarchive" data-id="${r.id}">Unarchive</button>
-        <button class="btn secondary" data-action="delete" data-id="${r.id}">Delete</button>
-      </div>` : ''}
-    </div>
-  `).join('') : `<div class="empty">${archivedAll.length ? 'No BFRs match this filter.' : 'Nothing archived yet.'}</div>`;
+  `).join('') : `<div class="empty">${records.length ? 'No BFRs match this search.' : 'No BFRs logged yet. Scan or add one above.'}</div>`;
 }
 
-function escapeHtml(s){
-  return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// ---------- Missing number detection ----------
+// BFR numbers are running numbers. Anything between the lowest and highest
+// logged number that isn't in the log is shown as missing (i.e. not scanned yet).
+try{ document.getElementById('gapFrom').value = localStorage.getItem('bfrGapFrom') || ''; }catch(e){}
+document.getElementById('gapFrom').addEventListener('input', (e)=>{
+  try{ localStorage.setItem('bfrGapFrom', e.target.value.trim()); }catch(err){}
+  renderGaps();
+});
+
+function renderGaps(){
+  const MAX_GAP = 20; // a gap longer than this is treated as a jump (old or misread entry), not missing BFRs
+  const panel = document.getElementById('gapPanel');
+  const title = document.getElementById('gapTitle');
+  const summary = document.getElementById('gapSummary');
+  const chips = document.getElementById('gapChips');
+
+  const strs = [];
+  const deptByNum = new Map();
+  let skipped = 0;
+  records.forEach(r=>{
+    const str = stripBfrPrefix(r.bfrNumber||'').trim();
+    if(!/^\d+$/.test(str)){ skipped++; return; }
+    strs.push(str);
+    const n = parseInt(str,10);
+    if(!deptByNum.get(n)) deptByNum.set(n, (r.department||'').toUpperCase());
+  });
+
+  const fromVal = parseInt(document.getElementById('gapFrom').value.trim(), 10);
+  const hasFrom = !isNaN(fromVal);
+  const nums = Array.from(deptByNum.keys()).filter(n=>!hasFrom || n >= fromVal).sort((a,b)=>a-b);
+
+  // Keep leading zeros (e.g. 0231) when the BFR numbers use them.
+  const width = strs.some(x=>x.length>1 && x[0]==='0') ? Math.max(...strs.map(x=>x.length)) : 0;
+  const fmt = n => width ? String(n).padStart(width,'0') : String(n);
+
+  const skipNote = skipped ? ` ${skipped} non-numeric entr${skipped===1?'y':'ies'} skipped.` : '';
+
+  if(nums.length < 2){
+    panel.className = 'gappanel clear';
+    title.textContent = 'Missing BFRs (0)';
+    summary.textContent = 'Log at least two BFR numbers to check for gaps.' + skipNote;
+    chips.innerHTML = '';
+    removeJumps();
+    return;
+  }
+
+  const gaps = [];
+  const jumps = [];
+  let missing = 0;
+  for(let i=1;i<nums.length;i++){
+    const diff = nums[i] - nums[i-1];
+    if(diff > 1){
+      const g = {start:nums[i-1]+1, end:nums[i]-1, prev:nums[i-1], next:nums[i], count:diff-1};
+      if(g.count > MAX_GAP){ jumps.push(g); }
+      else { gaps.push(g); missing += g.count; }
+    }
+  }
+
+  const rangeText = `${fmt(nums[0])} to ${fmt(nums[nums.length-1])}`;
+
+  if(!missing){
+    panel.className = 'gappanel clear';
+    title.textContent = 'Missing BFRs (0)';
+    summary.textContent = `No small gaps between ${rangeText}.` + skipNote;
+    chips.innerHTML = '';
+  } else {
+    panel.className = 'gappanel';
+    title.textContent = `Missing BFRs (${missing})`;
+    summary.textContent = `Not in the log, between ${rangeText}.` + skipNote;
+    chips.innerHTML = gaps.map(g=>{
+      const label = g.start === g.end ? fmt(g.start) : `${fmt(g.start)}–${fmt(g.end)}`;
+      return `<div class="gapitem"><span class="gapnum">${label}</span></div>`;
+    }).join('');
+  }
+
+  removeJumps();
+  if(jumps.length){
+    const div = document.createElement('div');
+    div.className = 'gapjumps';
+    div.id = 'gapJumps';
+    div.innerHTML = `<b>Large jumps, not counted as missing</b> (more than ${MAX_GAP} numbers apart, usually an old or misread entry):<br>` +
+      jumps.map(j=>`${fmt(j.prev)} → ${fmt(j.next)} (${j.count.toLocaleString('en-SG')} apart)`).join('<br>');
+    document.querySelector('#gapPanel .gapbody').appendChild(div);
+  }
+}
+function removeJumps(){
+  const old = document.getElementById('gapJumps');
+  if(old) old.remove();
 }
 
 document.getElementById('addForm').addEventListener('submit', async (e)=>{
@@ -672,47 +751,25 @@ document.getElementById('addForm').addEventListener('submit', async (e)=>{
   document.getElementById('bfrDept').value='';
   document.getElementById('bfrDate').value = todayStr();
   render();
-  showToast('Logged to Out Tray');
+  showToast('BFR logged');
   document.getElementById('bfrNum').focus();
 });
 
 document.getElementById('search').addEventListener('input', render);
+document.getElementById('deptFilter').addEventListener('change', render);
 document.getElementById('clearSearch').addEventListener('click', ()=>{
   document.getElementById('search').value='';
+  document.getElementById('deptFilter').value='ALL';
   render();
 });
 
 document.addEventListener('click', async (e)=>{
   const btn = e.target.closest('button[data-action]');
-  if(!btn) return;
-  if(!isAdmin) return;
+  if(!btn || !isAdmin) return;
   const id = btn.dataset.id;
-  const action = btn.dataset.action;
   const rec = records.find(r=>r.id===id);
   if(!rec) return;
-
-  if(action==='return'){
-    rec.scannedInDate = todayStr();
-    await saveRecords();
-    render();
-    showToast('Moved to In Tray');
-  } else if(action==='reopen'){
-    rec.scannedInDate = null;
-    rec.archived = false;
-    await saveRecords();
-    render();
-    showToast('Reopened — back in Out Tray');
-  } else if(action==='archive'){
-    rec.archived = true;
-    await saveRecords();
-    render();
-    showToast('Archived');
-  } else if(action==='unarchive'){
-    rec.archived = false;
-    await saveRecords();
-    render();
-    showToast('Moved back to In Tray');
-  } else if(action==='delete'){
+  if(btn.dataset.action==='delete'){
     if(confirm('Delete BFR '+rec.bfrNumber+' from the log? This cannot be undone.')){
       records = records.filter(r=>r.id!==id);
       await saveRecords();
@@ -722,33 +779,8 @@ document.addEventListener('click', async (e)=>{
   }
 });
 
-document.getElementById('filterOut').addEventListener('change', (e)=>{
-  trayFilters.out = e.target.value;
-  render();
-});
-document.getElementById('filterIn').addEventListener('change', (e)=>{
-  trayFilters.in = e.target.value;
-  render();
-});
-document.getElementById('filterArchived').addEventListener('change', (e)=>{
-  trayFilters.archived = e.target.value;
-  render();
-});
-
 // ---------- Bulk Scan & OCR ----------
-let scanMode = 'out';
 let reviewItems = [];
-
-document.getElementById('modeOutBtn').addEventListener('click', ()=>{
-  scanMode = 'out';
-  document.getElementById('modeOutBtn').classList.add('active');
-  document.getElementById('modeInBtn').classList.remove('active');
-});
-document.getElementById('modeInBtn').addEventListener('click', ()=>{
-  scanMode = 'in';
-  document.getElementById('modeInBtn').classList.add('active');
-  document.getElementById('modeOutBtn').classList.remove('active');
-});
 
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
@@ -779,10 +811,7 @@ function extractBfrNumber(text){
   return '';
 }
 function extractDepartment(text){
-  // Anchor to the "Maintenance Group" field specifically — this is the trade
-  // group that does the repair. It's a different field from "Department"
-  // near the top of the form, which is the requestor's own office and can
-  // hold a completely different value (e.g. "Judge MJ", "Human Resource").
+  // Anchor to the "Maintenance Group" field — the trade group that does the repair.
   const idx = text.search(/Maintenance\s*Group/i);
   const scope = idx !== -1 ? text.slice(idx, idx + 60) : text;
   const upper = scope.toUpperCase();
@@ -878,24 +907,22 @@ function renderReview(){
     return;
   }
   box.innerHTML = reviewItems.map((it,i)=>{
-    const existingMatch = scanMode==='in' ? records.find(r=>!r.scannedInDate && r.bfrNumber.toLowerCase()===it.bfrNumber.toLowerCase()) : null;
-    const matchClass = scanMode==='in' ? (existingMatch ? 'matched' : 'nomatch') : '';
-    const matchNote = scanMode==='in' ? (existingMatch ? '✓ Matches pending Out Tray entry' : '⚠ No matching Out Tray entry — will log as new') : '';
+    const isDupe = it.bfrNumber && records.some(r=>(r.bfrNumber||'').toLowerCase()===it.bfrNumber.toLowerCase());
     return `
-    <div class="reviewrow ${matchClass}" data-idx="${i}">
+    <div class="reviewrow ${isDupe?'dupe':''}" data-idx="${i}">
       <input type="text" class="rv-bfr" value="${escapeHtml(it.bfrNumber)}" placeholder="BFR number">
       <select class="rv-dept">
         <option value="">— Select —</option>
         ${DEPARTMENTS.map(d=>`<option value="${d}" ${it.department===d?'selected':''}>${d}</option>`).join('')}
       </select>
-      <div style="font-size:10px;color:var(--ink-soft);">${escapeHtml(it.source)}${matchNote?'<br>'+matchNote:''}</div>
+      <div style="font-size:10px;color:var(--ink-soft);">${escapeHtml(it.source)}${isDupe?'<br>⚠ Already in the log':''}</div>
       <button class="btn secondary rv-remove" data-idx="${i}" style="padding:6px 10px;font-size:10px;">Remove</button>
       <div class="snippet">OCR read: "${escapeHtml(it.snippet)}…"</div>
     </div>`;
   }).join('');
   document.getElementById('reviewActions').style.display = 'flex';
 
-  box.querySelectorAll('.rv-bfr').forEach((inp,i)=>inp.addEventListener('input',()=>{reviewItems[i].bfrNumber=inp.value; renderReview();}));
+  box.querySelectorAll('.rv-bfr').forEach((inp,i)=>inp.addEventListener('change',()=>{reviewItems[i].bfrNumber=inp.value; renderReview();}));
   box.querySelectorAll('.rv-dept').forEach((sel,i)=>sel.addEventListener('change',()=>{reviewItems[i].department=sel.value;}));
   box.querySelectorAll('.rv-remove').forEach(btn=>btn.addEventListener('click',()=>{
     reviewItems.splice(parseInt(btn.dataset.idx),1);
@@ -903,63 +930,30 @@ function renderReview(){
   }));
 }
 
-document.getElementById('discardScan').addEventListener('click', ()=>{
+function clearScanArea(){
   reviewItems = [];
   document.getElementById('reviewTable').innerHTML = '';
   document.getElementById('scanProgress').innerHTML = '';
   document.getElementById('reviewActions').style.display = 'none';
-});
+}
+
+document.getElementById('discardScan').addEventListener('click', clearScanArea);
 
 document.getElementById('confirmScan').addEventListener('click', async ()=>{
   if(!isAdmin) return;
-  let added = 0, matched = 0;
+  let added = 0;
   for(const it of reviewItems){
     if(!it.bfrNumber) continue;
-    if(scanMode === 'out'){
-      records.push({id:uid(), bfrNumber:it.bfrNumber, department:it.department, scannedOutDate:todayStr(), scannedInDate:null});
-      added++;
-    } else {
-      const existing = records.find(r=>!r.scannedInDate && r.bfrNumber.toLowerCase()===it.bfrNumber.toLowerCase());
-      if(existing){
-        existing.scannedInDate = todayStr();
-        matched++;
-      } else {
-        records.push({id:uid(), bfrNumber:it.bfrNumber, department:it.department, scannedOutDate:null, scannedInDate:todayStr()});
-        added++;
-      }
-    }
+    records.push({id:uid(), bfrNumber:it.bfrNumber, department:it.department, scannedOutDate:todayStr(), scannedInDate:null});
+    added++;
   }
   await saveRecords();
-  reviewItems = [];
-  document.getElementById('reviewTable').innerHTML = '';
-  document.getElementById('scanProgress').innerHTML = '';
-  document.getElementById('reviewActions').style.display = 'none';
+  clearScanArea();
   render();
-  showToast(`Applied: ${added} new, ${matched} matched & returned`);
+  showToast(`${added} BFR${added===1?'':'s'} added to log`);
 });
 
-// ---------- Admin Auth (Firebase Authentication) ----------
-let isAdmin = false;
-
-function updateAuthUI(){
-  const badge = document.getElementById('authBadge');
-  const toggleBtn = document.getElementById('authToggleBtn');
-  const adminControls = document.getElementById('adminControls');
-  const viewerNote = document.getElementById('viewerNote');
-
-  if(isAdmin){
-    badge.innerHTML = '<span class="adminbadge">Admin Mode</span>';
-    toggleBtn.textContent = 'Logout';
-    adminControls.style.display = 'block';
-    viewerNote.style.display = 'none';
-  } else {
-    badge.innerHTML = '<span class="viewerbadge">View Only</span>';
-    toggleBtn.textContent = 'Admin Login';
-    adminControls.style.display = 'none';
-    viewerNote.style.display = 'block';
-  }
-}
-
+// ---------- Login (Firebase Authentication) ----------
 function showLoginPanel(){
   document.getElementById('loginPanel').classList.add('show');
   document.getElementById('loginErr').classList.remove('show');
@@ -973,12 +967,11 @@ function hideLoginPanel(){
 document.getElementById('authToggleBtn').addEventListener('click', ()=>{
   if(isAdmin){
     auth.signOut();
-    showToast('Logged out — view-only mode');
+    showToast('Logged out — view only');
   } else {
     showLoginPanel();
   }
 });
-
 document.getElementById('loginCancel').addEventListener('click', hideLoginPanel);
 
 document.getElementById('loginSubmit').addEventListener('click', attemptLogin);
@@ -989,28 +982,43 @@ document.getElementById('loginPassword').addEventListener('keydown', (e)=>{
 async function attemptLogin(){
   const pw = document.getElementById('loginPassword').value;
   const submitBtn = document.getElementById('loginSubmit');
+  const errBox = document.getElementById('loginErr');
+  errBox.classList.remove('show');
   submitBtn.textContent = 'Checking…';
   submitBtn.disabled = true;
   try{
     await auth.signInWithEmailAndPassword(ADMIN_EMAIL, pw);
-    hideLoginPanel();
-    showToast('Admin unlocked');
   }catch(err){
-    document.getElementById('loginErr').classList.add('show');
+    errBox.textContent = err.code === 'auth/too-many-requests'
+      ? 'Too many attempts. Wait a few minutes and try again.'
+      : 'Incorrect password. Try again.';
+    errBox.classList.add('show');
   }
   submitBtn.textContent = 'Unlock';
   submitBtn.disabled = false;
 }
 
-// Firebase Auth drives isAdmin — real server-side check, not a client-side flag.
+// Anyone can view. Login only unlocks scanning, adding and deleting.
 auth.onAuthStateChanged((user)=>{
   isAdmin = !!user;
-  updateAuthUI();
+  const toggleBtn = document.getElementById('authToggleBtn');
+  const badge = document.getElementById('authBadge');
+  const adminControls = document.getElementById('adminControls');
+  if(isAdmin){
+    hideLoginPanel();
+    badge.innerHTML = '<span class="adminbadge">Admin</span>';
+    toggleBtn.textContent = 'Logout';
+    adminControls.style.display = 'block';
+  } else {
+    badge.innerHTML = '<span class="viewerbadge">View only</span>';
+    toggleBtn.textContent = 'Admin Login';
+    adminControls.style.display = 'none';
+    clearScanArea();
+  }
   render();
 });
 
-(async function init(){
-  updateAuthUI();
+(function init(){
   document.getElementById('bfrDate').value = todayStr();
   const today = new Date();
   document.getElementById('todayLabel').textContent = today.toLocaleDateString('en-SG',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
