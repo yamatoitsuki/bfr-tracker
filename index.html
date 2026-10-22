@@ -11,22 +11,28 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
-    --kraft:#e8dfc8;
-    --kraft-dark:#d9cca4;
-    --ink:#232520;
-    --ink-soft:#5b5648;
-    --stamp-red:#a13d2e;
-    --stamp-green:#3f6b3d;
-    --paper:#f6f1e2;
-    --line:#c9bd97;
+    color-scheme:dark;
+    --kraft:#14161a;
+    --kraft-dark:#0f1114;
+    --ink:#ece8dc;
+    --ink-soft:#a3a8b0;
+    --stamp-red:#ff7a6b;
+    --stamp-green:#6fd08c;
+    --accent:#f0c674;
+    --paper:#1d2026;
+    --field:#101216;
+    --line:#363b45;
+    --edge:#4a505b;
   }
+  input, select{color:var(--ink);background:var(--field);}
+  ::placeholder{color:var(--ink-soft);opacity:0.8;}
   *{box-sizing:border-box;}
   body{
     margin:0;
     font-family:'Courier New',ui-monospace,monospace;
     background:var(--kraft);
     background-image:
-      repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 3px);
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 3px);
     color:var(--ink);
     min-height:100vh;
     padding:24px 16px 60px;
@@ -66,7 +72,7 @@
   .datestamp .big{
     font-family:'Arial Black',Arial,sans-serif;
     font-size:15px;
-    color:var(--ink);
+    color:var(--accent);
     letter-spacing:1px;
   }
 
@@ -102,7 +108,7 @@
     font-size:14px;
     padding:8px;
     border:1px solid var(--line);
-    background:#fff;
+    background:var(--field);
     color:var(--ink);
   }
   form.addform input:focus, form.addform select:focus{outline:2px solid var(--ink);outline-offset:1px;}
@@ -130,7 +136,7 @@
     font-family:inherit;
     padding:9px 12px;
     border:1px solid var(--line);
-    background:#fff;
+    background:var(--field);
     font-size:13px;
   }
   .searchrow select{
@@ -138,7 +144,7 @@
     font-size:13px;
     padding:9px 10px;
     border:1px solid var(--line);
-    background:#fff;
+    background:var(--field);
     color:var(--ink);
   }
 
@@ -177,11 +183,11 @@
   .gappanel .gapfrom{font-size:11px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
   .gappanel .gapfrom input{
     width:90px;font-family:inherit;font-size:12px;padding:5px 6px;
-    border:1px solid var(--line);background:#fff;
+    border:1px solid var(--line);background:var(--field);
   }
   .gappanel .gapsummary{font-size:12px;color:var(--ink-soft);margin-bottom:10px;}
   .gapchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;}
-  .gapitem{background:#fff;border:1px solid var(--stamp-red);padding:6px 10px;display:flex;gap:8px;align-items:baseline;}
+  .gapitem{background:var(--field);border:1px solid var(--stamp-red);padding:6px 10px;display:flex;gap:8px;align-items:baseline;}
   .gapnum{font-family:'Arial Black',Arial,sans-serif;font-size:14px;letter-spacing:0.5px;color:var(--stamp-red);}
   .gapbody{margin-top:12px;}
   .gapbody .gapfrom{margin-bottom:10px;}
@@ -210,7 +216,7 @@
   .gapchip{
     font-family:'Arial Black',Arial,sans-serif;
     font-size:12px;letter-spacing:0.5px;
-    background:#fff;color:var(--stamp-red);
+    background:var(--field);color:var(--stamp-red);
     border:1px solid var(--stamp-red);
     padding:4px 8px;
   }
@@ -239,6 +245,7 @@
     font-family:'Arial Black',Arial,sans-serif;
     font-size:16px;
     letter-spacing:1px;
+    color:var(--accent);
   }
   .entry .dept{font-size:12px;color:var(--ink-soft);}
   .entry .when{font-size:11px;color:var(--ink-soft);}
@@ -267,7 +274,7 @@
 
   .scanbox{
     background:var(--paper);
-    border:2px solid var(--ink);
+    border:2px solid var(--edge);
     padding:18px;
     margin-bottom:22px;
   }
@@ -284,10 +291,10 @@
     font-size:12px;
     color:var(--ink-soft);
     cursor:pointer;
-    background:#fdfbf3;
+    background:var(--field);
   }
   .dropzone:hover{border-color:var(--ink);}
-  .dropzone.drag{border-color:var(--stamp-green);background:#eef3ea;}
+  .dropzone.drag{border-color:var(--stamp-green);background:#1c2b21;}
   .dropzone input{display:none;}
 
   .scanprogress{margin-top:14px;}
@@ -305,7 +312,7 @@
     grid-template-columns:1.1fr 1.3fr 1fr auto;
     gap:10px;
     align-items:center;
-    background:#fff;
+    background:var(--field);
     border:1px solid var(--line);
     padding:10px 12px;
     margin-bottom:8px;
@@ -347,7 +354,7 @@
 
   .loginpanel{
     background:var(--paper);
-    border:2px solid var(--ink);
+    border:2px solid var(--edge);
     padding:16px;
     margin:0 auto 22px;
     display:none;
