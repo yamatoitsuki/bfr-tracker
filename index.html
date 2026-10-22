@@ -423,7 +423,7 @@
     <div class="scanbox">
       <h2>Bulk Scan &amp; Auto-Extract</h2>
       <div class="dropzone" id="dropzone">
-        <div id="dropzoneLabel">Drop BFR images or PDFs here, or click to choose files<br><span style="font-size:10px;">Accepts multiple files at once — JPG, PNG, PDF</span></div>
+        <div id="dropzoneLabel">Drop BFR images or PDFs here, or click to choose files<br><span style="font-size:10px;">Accepts multiple files at once — JPG, PNG, PDF. Cryotos attached reports are read from the PDF text, no OCR needed.</span></div>
         <input type="file" id="fileInput" accept="image/*,.pdf" multiple>
       </div>
       <div class="scanprogress" id="scanProgress"></div>
@@ -829,9 +829,17 @@ fileInput.addEventListener('change', (e)=>{
 
 const DEPARTMENTS = ['ACMV','BUILDING','MECHANICAL','ELECTRICAL','OTIS'];
 
+// The Cryotos "Attached Report" PDF labels the number as "BFR Number" under a
+// "MA BFR NUMBER" heading, and the trade as "KYI Department" — different labels
+// from the physical BFR form, so both formats get their own patterns.
+function isCryotosReport(text){
+  return /MA\s*BFR\s*NUMBER/i.test(text) || /Breakdown\s*Fault\s*Report/i.test(text);
+}
+
 function extractBfrNumber(text){
   const patterns = [
-    /BFR[\s#\-\/:]*([A-Z0-9][A-Z0-9\-\/]{2,14})/i,
+    /BFR\s*Number\s*[:\-]?\s*(\d{3,6})\b/i,                                      // Cryotos report
+    /BFR[\s#\-\/:]*([A-Z0-9][A-Z0-9\-\/]{2,14})/i,                               // physical form
     /(?:BFR\s*No\.?|Report\s*No\.?|Fault\s*Report\s*No\.?)\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-\/]{2,14})/i
   ];
   for(const p of patterns){
@@ -840,8 +848,12 @@ function extractBfrNumber(text){
   }
   return '';
 }
+
 function extractDepartment(text){
-  // Anchor to the "Maintenance Group" field — the trade group that does the repair.
+  // Cryotos report: "KYI Department | MECHANICAL" in the Fault Information table.
+  const kyi = text.match(/KYI\s*Department\s*[:\-]?\s*(ACMV|BUILDING|MECHANICAL|ELECTRICAL|OTIS)/i);
+  if(kyi) return kyi[1].toUpperCase();
+  // Physical form: anchor to the "Maintenance Group" field — the trade group that does the repair.
   const idx = text.search(/Maintenance\s*Group/i);
   const scope = idx !== -1 ? text.slice(idx, idx + 60) : text;
   const upper = scope.toUpperCase();
@@ -856,20 +868,32 @@ async function ocrImageSource(imgSource){
   return result.data.text || '';
 }
 
+// Native PDFs (the Cryotos attached report) carry a real text layer, so the
+// values can be read exactly with no OCR pass. Scanned forms have no text
+// layer — those pages still get rendered and sent through Tesseract.
 async function pdfPagesToImages(file){
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-  const canvases = [];
+  const pages = [];
   for(let i=1;i<=pdf.numPages;i++){
     const page = await pdf.getPage(i);
-    const viewport = page.getViewport({scale:2});
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    await page.render({canvasContext:canvas.getContext('2d'), viewport}).promise;
-    canvases.push(canvas);
+    let text = '';
+    try{
+      const tc = await page.getTextContent();
+      text = tc.items.map(it=>it.str).join(' ').replace(/\s+/g,' ').trim();
+    }catch(e){ text = ''; }
+    pages.push({page, text});
   }
-  return canvases;
+  return pages;
+}
+
+async function renderPdfPage(page){
+  const viewport = page.getViewport({scale:2});
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  await page.render({canvasContext:canvas.getContext('2d'), viewport}).promise;
+  return canvas;
 }
 
 function setProgress(label, status, cls){
@@ -897,30 +921,41 @@ async function handleFiles(files){
   for(const file of files){
     setProgress(file.name, 'Reading…', 'busy');
     try{
-      let texts = [];
+      let reads = [];
       if(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')){
-        const canvases = await pdfPagesToImages(file);
-        for(let i=0;i<canvases.length;i++){
-          setProgress(file.name, `OCR page ${i+1}/${canvases.length}…`, 'busy');
-          const t = await ocrImageSource(canvases[i]);
-          texts.push(t);
+        const pages = await pdfPagesToImages(file);
+        for(let i=0;i<pages.length;i++){
+          if(pages[i].text.length >= 40){
+            setProgress(file.name, `Reading text page ${i+1}/${pages.length}`, 'busy');
+            reads.push({text:pages[i].text, ocr:false});
+          } else {
+            setProgress(file.name, `OCR page ${i+1}/${pages.length}…`, 'busy');
+            const canvas = await renderPdfPage(pages[i].page);
+            reads.push({text: await ocrImageSource(canvas), ocr:true});
+          }
         }
       } else {
         setProgress(file.name, 'Running OCR…', 'busy');
-        const t = await ocrImageSource(file);
-        texts.push(t);
+        reads.push({text: await ocrImageSource(file), ocr:true});
       }
 
-      texts.forEach((text, idx)=>{
-        const bfr = extractBfrNumber(text);
-        const dept = extractDepartment(text);
-        reviewItems.push({
-          source: file.name + (texts.length>1 ? ' (page '+(idx+1)+')' : ''),
-          bfrNumber: bfr,
-          department: dept,
-          snippet: text.replace(/\s+/g,' ').trim().slice(0,140)
-        });
+      const rows = reads.map((read, idx)=>{
+        const text = read.text;
+        return {
+          report: isCryotosReport(text),
+          source: file.name + (reads.length>1 ? ' (page '+(idx+1)+')' : ''),
+          bfrNumber: extractBfrNumber(text),
+          department: extractDepartment(text),
+          // Report PDFs read exactly from the text layer, so there is nothing to
+          // proofread — and the page also carries requestor contact details and
+          // signatures, which don't need to be on screen.
+          snippet: (read.ocr && !isCryotosReport(text)) ? text.replace(/\s+/g,' ').trim().slice(0,140) : ''
+        };
       });
+      // A report PDF carries the number on its first page only; the resolution
+      // and acknowledgement pages that follow are part of the same BFR.
+      const keep = rows.some(r=>r.report) ? rows.filter(r=>r.bfrNumber) : rows;
+      keep.forEach(r=>reviewItems.push(r));
       setProgress(file.name, 'Done', 'done');
     }catch(err){
       setProgress(file.name, 'Failed to read', 'busy');
@@ -947,7 +982,7 @@ function renderReview(){
       </select>
       <div style="font-size:10px;color:var(--ink-soft);">${escapeHtml(it.source)}${isDupe?'<br>⚠ Already in the log':''}</div>
       <button class="btn secondary rv-remove" data-idx="${i}" style="padding:6px 10px;font-size:10px;">Remove</button>
-      <div class="snippet">OCR read: "${escapeHtml(it.snippet)}…"</div>
+      ${it.snippet ? `<div class="snippet">OCR read: "${escapeHtml(it.snippet)}…"</div>` : ''}
     </div>`;
   }).join('');
   document.getElementById('reviewActions').style.display = 'flex';
