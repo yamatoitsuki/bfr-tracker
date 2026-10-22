@@ -222,6 +222,7 @@
   }
   .gapchip small{font-family:'Courier New',monospace;font-size:10px;color:var(--ink-soft);margin-left:4px;}
 
+  .loaderror{border:2px solid var(--stamp-red);color:var(--stamp-red);background:var(--paper);padding:12px 14px;margin-bottom:22px;font-size:12px;line-height:1.6;}
   .rangemissing{display:none;margin:-8px 0 18px;font-size:12px;line-height:1.7;color:var(--stamp-red);}
   .rangemissing.show{display:block;}
   .rangemissing.ok{color:var(--stamp-green);}
@@ -408,6 +409,9 @@
   <div id="loading" class="loading">Loading log…</div>
 
   <div id="app" style="display:none;">
+    <div class="loaderror" id="loadError" style="display:none;">
+      Couldn't load the BFR log. Your data has not been deleted. Check that the Firestore rules allow public read, then refresh. Adding and deleting is blocked until the log loads.
+    </div>
     <div class="stats">
       <div class="stat">
         <div class="n" id="statTotal">0</div>
@@ -540,11 +544,23 @@ function scanDateOf(r){
 }
 
 // Live sync — anyone can read; only a logged-in admin can write.
+let dataLoaded = false;   // true only after the log has really been read from Firestore
+let syncFailed = false;
+function startSync(){
+  if(unsubscribeRecords) unsubscribeRecords();
+  unsubscribeRecords = subscribeToRecords(()=>{
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='block';
+  });
+}
 function subscribeToRecords(onFirstLoad){
   let firstLoadDone = false;
   return recordsDocRef.onSnapshot((snap)=>{
     const data = snap.exists ? snap.data() : null;
     records = (data && Array.isArray(data.data)) ? data.data : [];
+    dataLoaded = true;
+    syncFailed = false;
+    document.getElementById('loadError').style.display = 'none';
     if(!firstLoadDone){
       firstLoadDone = true;
       if(onFirstLoad) onFirstLoad();
@@ -553,6 +569,9 @@ function subscribeToRecords(onFirstLoad){
   }, (err)=>{
     console.error('Firestore sync error:', err);
     showToast('Sync error — check connection');
+    dataLoaded = false;
+    syncFailed = true;
+    document.getElementById('loadError').style.display = 'block';
     if(!firstLoadDone){
       firstLoadDone = true;
       if(onFirstLoad) onFirstLoad();
@@ -561,6 +580,10 @@ function subscribeToRecords(onFirstLoad){
 }
 
 async function saveRecords(){
+  if(!dataLoaded){
+    showToast('Log not loaded — nothing was saved');
+    return;
+  }
   try{
     await recordsDocRef.set({ data: records });
   }catch(e){
@@ -1023,16 +1046,14 @@ auth.onAuthStateChanged((user)=>{
     clearScanArea();
   }
   render();
+  if(syncFailed) startSync();
 });
 
 (function init(){
   document.getElementById('bfrDate').value = todayStr();
   const today = new Date();
   document.getElementById('todayLabel').textContent = today.toLocaleDateString('en-SG',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-  subscribeToRecords(()=>{
-    document.getElementById('loading').style.display='none';
-    document.getElementById('app').style.display='block';
-  });
+  startSync();
 })();
 </script>
 </body>
